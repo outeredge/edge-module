@@ -1,0 +1,25 @@
+{
+    "name": "outeredge/edge",
+    "description": "A set of generic classes which are commonly used across multiple modules.",
+    "type": "library",
+    "keywords": [
+        "edge"
+    ],
+    "homepage": "https://github.com/outeredge/edge",
+    "authors": [
+        {
+            "name": "David Windell",
+            "email": "david@outeredgeuk.com",
+            "homepage": "http://www.outeredgeuk.com/"
+        },
+    ],
+    "require": {
+        "php": ">=5.3.3",
+        "zendframework/zendframework": "2.*"
+    },
+    "autoload": {
+        "psr-0": {
+            "Edge": "src/"
+        }
+    }
+}
