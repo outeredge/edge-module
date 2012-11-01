@@ -1,0 +1,47 @@
+Message-ID: <4F97CEA1.50702030@outeredgeuk.com>
+Date: Wed, 25 Apr 2012 11:14:57 +0100
+From: Test Person <test@zebreco.com>
+Reply-To: david@zebreco.com
+Organization: OuterEdge UK Ltd
+User-Agent: Mozilla/5.0 (Windows NT 6.1; WOW64; rv:11.0) Gecko/20120327 Thunderbird/11.0.1
+MIME-Version: 1.0
+To: tickets@zebreco.david.localdev.outeredgeuk.com
+CC: David Windell <david@outeredgeuk.com>, Mike <mike@outeredgeuk.com>
+References: <4F99070D.2070109@outeredgeuk.com> <4F72A649-2D0E-4050-BF0A-6F1BD3471581@outeredgeuk.com> <4F990972.9030507@outeredgeuk.com> <EA6C7273-DB61-450A-B76B-526C35035D75@outeredgeuk.com>
+Subject: Test Create Ticket
+Content-Type: multipart/alternative;
+ boundary="------------060506030002060300000703"
+
+This is a multi-part message in MIME format.
+--------------060506030002060300000703
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
+
+Test
+
+--------------060506030002060300000703
+Content-Type: text/html; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+
+<html>
+  <head>
+
+    <meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+  </head>
+  <body bgcolor="#FFFFFF" text="#000000">
+    Test<br>
+    <div class="moz-signature">-- <br>
+      <style>
+body,td { font-family: Helvetica,Arial,sans-serif; font-size: 13px; font-weight: normal; background:#ffffff; color:#333333; }
+a { color: #ED1C24;text-decoration:none;border-bottom:1px dotted #999999;padding-bottom:1px;font-weight:bold; }
+</style><strong>OuterEdge UK</strong> - an interactive web <strong>development</strong>
+      agency<br>
+      <a style="color: #ED1C24;" href="http://www.outeredgeuk.com/">www.outeredgeuk.com</a><br>
+      <span style="font-size: 9px;"><br>
+        Registered in England 3712531<br>
+        Registered Office: 1st Floor, 48-50 North Road, LANCING, BN15
+        9AB.</span> </div>
+  </body>
+</html>
+
+--------------060506030002060300000703--
