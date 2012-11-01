@@ -11,7 +11,7 @@
             "name": "David Windell",
             "email": "david@outeredgeuk.com",
             "homepage": "http://www.outeredgeuk.com/"
-        },
+        }
     ],
     "require": {
         "php": ">=5.3.3",
