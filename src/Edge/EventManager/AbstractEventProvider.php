@@ -2,6 +2,7 @@
 
 namespace Edge\EventManager;
 
+use Zend\EventManager\EventManager;
 use Zend\EventManager\EventManagerAwareInterface;
 use Zend\EventManager\EventManagerInterface;
 use Traversable;
