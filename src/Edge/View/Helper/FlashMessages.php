@@ -2,6 +2,7 @@
 
 namespace Edge\View\Helper;
 
+use Zend\Mvc\Controller\Plugin\FlashMessenger;
 use Zend\View\Helper\AbstractHelper;
 
 class FlashMessages extends AbstractHelper {
@@ -28,7 +29,10 @@ class FlashMessages extends AbstractHelper {
      * @return string
      */
     public function __invoke(
-    $defaultLevel = 'error', $template = '<div class="alert alert-%s"><button class="close" data-dismiss="alert">×</button>%s</div>', $namespace = 'default') {
+        $defaultLevel = 'error',
+        $template = '<div class="alert alert-%s"><button class="close" data-dismiss="alert">×</button>%s</div>',
+        $namespace = 'default'
+    ) {
 
         $flashMessenger = $this->getFlashMessenger();
         $flashMessenger->setNamespace($namespace);
@@ -64,9 +68,12 @@ class FlashMessages extends AbstractHelper {
     /**
      * Get FlashMessenger Controller Plugin
      *
-     * @return \Zend\Mvc\Controller\Plugin\FlashMessenger
+     * @return FlashMessenger
      */
     protected function getFlashMessenger() {
+        if (null === $this->flashMessenger) {
+            $this->flashMessenger = new FlashMessenger();
+        }
         return $this->flashMessenger;
     }
 

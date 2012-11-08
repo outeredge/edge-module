@@ -2,45 +2,51 @@
 
 namespace Edge\View\Helper;
 
-use Edge\Service\IdentityProviderInterface;
 use Zend\View\Helper\AbstractHelper;
+use Zend\Authentication\AuthenticationService;
 
-class Identity extends AbstractHelper {
-
+class Identity extends AbstractHelper
+{
     /**
-     * @var IdentityProviderInterface
+     * @var AuthenticationService
      */
-    protected $identityProvider;
+    protected $authService;
+
 
     /**
-     * Returns the current identity (i.e. Entity), if any
+     * Get current users identity
      *
      * @access public
      */
-    public function __invoke() {
-        if (null === $this->getIdentityProvider()) {
+    public function __invoke()
+    {
+        if (null === $this->getAuthService()) {
             return null;
         }
-        return $this->getIdentityProvider()->getActiveIdentity();
+
+        if (!$this->getAuthService()->hasIdentity()) {
+            return null;
+        }
+
+        return $this->getAuthService()->getIdentity();
     }
 
     /**
-     * Get identity provider
+     * Get authService.
      *
-     * @return IdentityProviderInterface
+     * @return AuthenticationService
      */
-    protected function getIdentityProvider() {
-        return $this->identityProvider;
+    protected function getAuthService() {
+        return $this->authService;
     }
 
     /**
-     * Set identity provider
+     * Set authService.
      *
-     * @param IdentityProviderInterface $provider
+     * @param AuthenticationService $authService
      */
-    public function setIdentityProvider(IdentityProviderInterface $provider) {
-        $this->identityProvider = $provider;
+    public function setAuthService(AuthenticationService $authService) {
+        $this->authService = $authService;
         return $this;
     }
-
 }
