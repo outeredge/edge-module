@@ -67,7 +67,7 @@ abstract class AbstractDoctrineTestCase extends AbstractTestCase
     protected function getPlatform()
     {
         if (null === $this->platform) {
-            $this->platform = $this->getEntityManager()->getConnection()->getDatabasePlatform()->getName();
+            $this->platform = ucfirst($this->getEntityManager()->getConnection()->getDatabasePlatform()->getName());
         }
         return $this->platform;
     }
