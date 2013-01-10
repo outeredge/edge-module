@@ -24,7 +24,7 @@ class Paginator extends ZendPaginator
 
         $currentItems = $this->getCurrentItems();
         foreach ($currentItems as $item) {
-            $results[$key][] = $this->entityToArray($item, $params);
+            $results[$key][] = $this->itemToArray($item, $params);
         }
 
         return $results;
