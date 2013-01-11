@@ -7,31 +7,35 @@ use Zend\InputFilter\InputFilter;
 use Zend\InputFilter\InputFilterAwareInterface;
 use Zend\InputFilter\InputFilterInterface;
 
-abstract class AbstractEntity implements ArrayAccess, InputFilterAwareInterface {
-
+abstract class AbstractEntity implements ArrayAccess, InputFilterAwareInterface
+{
     /**
      * @var InputFilterInterface
      */
     protected $inputFilter;
 
-    public function offsetExists($offset) {
-        $method = "get$offset";
-        return array_key_exists($method, get_class_methods($this));
+    public function offsetExists($offset)
+    {
+        $method = 'get' . ucfirst($offset);
+        return in_array($method, get_class_methods($this));
     }
 
-    public function offsetSet($offset, $value) {
+    public function offsetSet($offset, $value)
+    {
         throw new BadMethodCallException("Array access of class " . get_class($this) . " is read-only!");
     }
 
-    public function offsetGet($offset) {
-        $method = "get$offset";
+    public function offsetGet($offset)
+    {
+        $method = 'get' . ucfirst($offset);
         if (in_array($method, get_class_methods($this))) {
             return $this->$method();
         }
         return null;
     }
 
-    public function offsetUnset($offset) {
+    public function offsetUnset($offset)
+    {
         throw new BadMethodCallException("Array access of class " . get_class($this) . " is read-only!");
     }
 
@@ -48,5 +52,4 @@ abstract class AbstractEntity implements ArrayAccess, InputFilterAwareInterface 
         }
         return $this->inputFilter;
     }
-
 }
