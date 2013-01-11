@@ -15,8 +15,8 @@ abstract class AbstractEntity implements ArrayAccess, InputFilterAwareInterface 
     protected $inputFilter;
 
     public function offsetExists($offset) {
-        $value = $this->{"get$offset"}();
-        return $value !== null;
+        $method = "get$offset";
+        return array_key_exists($method, get_class_methods($this));
     }
 
     public function offsetSet($offset, $value) {
@@ -24,7 +24,11 @@ abstract class AbstractEntity implements ArrayAccess, InputFilterAwareInterface 
     }
 
     public function offsetGet($offset) {
-        return $this->{"get$offset"}();
+        $method = "get$offset";
+        if (in_array($method, get_class_methods($this))) {
+            return $this->$method();
+        }
+        return null;
     }
 
     public function offsetUnset($offset) {
