@@ -100,7 +100,7 @@ class Filter
                 'equals' => $equals,
             );
         } else {
-            throw new \Exception('Invalid field specified');
+            throw new \Exception("Invalid field [$field] specified");
         }
         return $this;
     }
@@ -177,7 +177,7 @@ class Filter
     public function setSort($sort, $order = self::ORDER_DESC)
     {
         if (!array_key_exists($sort, $this->validSearchFields)) {
-            throw new \Exception('Invalid field specified');
+            throw new \Exception("Invalid sort field [$sort] specified");
         }
 
         if ($order !== self::ORDER_DESC) {

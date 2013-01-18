@@ -6,25 +6,25 @@ use Doctrine\ORM\EntityRepository;
 use Doctrine\ORM\QueryBuilder;
 use Edge\Search\Filter;
 
-class AbstractRepository extends EntityRepository
+abstract class AbstractRepository extends EntityRepository
 {
     /**
      * Allowed search fields
      * @var array
      */
-    protected $validSearchFields = array();
+    protected static $validSearchFields = array('test');
 
     /**
      * Fields to apply a %like% search to
      * @var array
      */
-    protected $keywordSearchFields = array();
+    protected static $keywordSearchFields = array();
 
     /**
      * Array of field names and their default values
      * @var array
      */
-    protected $defaultValues = array();
+    protected static $defaultValues = array();
 
     /**
      * Add filter to QueryBuilder
@@ -48,23 +48,23 @@ class AbstractRepository extends EntityRepository
 
             if ($data['equals']) {
                 if (null === $value) {
-                    $orXs[$field]->add($filter->validSearchFields[$field] . ' IS NULL');
+                    $orXs[$field]->add(static::$validSearchFields[$field] . ' IS NULL');
                 } else {
                     if (is_array($value)) {
-                        $orXs[$field]->add($qb->expr()->in($this->validSearchFields[$field], ':'.$field.$i));
+                        $orXs[$field]->add($qb->expr()->in(static::$validSearchFields[$field], ':'.$field.$i));
                     } else {
-                        $orXs[$field]->add($qb->expr()->eq($this->validSearchFields[$field], ':'.$field.$i));
+                        $orXs[$field]->add($qb->expr()->eq(static::$validSearchFields[$field], ':'.$field.$i));
                     }
                     $qb->setParameter($field . $i, $value);
                 }
             } else {
                 if (null === $value) {
-                    $orXs[$field]->add('NOT '. $this->validSearchFields[$field] . ' IS NULL');
+                    $orXs[$field]->add('NOT '. static::$validSearchFields[$field] . ' IS NULL');
                 } else {
                     if (is_array($value)) {
-                        $orXs[$field]->add($qb->expr()->notIn($this->validSearchFields[$field], ':'.$field.$i));
+                        $orXs[$field]->add($qb->expr()->notIn(static::$validSearchFields[$field], ':'.$field.$i));
                     } else {
-                        $orXs[$field]->add($qb->expr()->neq($this->validSearchFields[$field], ':'.$field.$i));
+                        $orXs[$field]->add($qb->expr()->neq(static::$validSearchFields[$field], ':'.$field.$i));
                     }
                     $qb->setParameter($field . $i, $value);
                 }
@@ -77,9 +77,9 @@ class AbstractRepository extends EntityRepository
             }
         }
 
-        if (null !== $filter->getKeywords() && count($this->keywordSearchFields)) {
+        if (null !== $filter->getKeywords() && count(static::$keywordSearchFields)) {
             $orX = $qb->expr()->orX();
-            foreach ($this->keywordSearchFields as $kfield) {
+            foreach (static::$keywordSearchFields as $kfield) {
                 $orX->add($qb->expr()->like($kfield,  ':keyword'));
             }
             $qb->andWhere($orX);
@@ -92,13 +92,15 @@ class AbstractRepository extends EntityRepository
 
         return $qb;
     }
-    
-    public function getFilter($query)
+
+    public static function getFilter($query = null)
     {
         $filter = new Filter();
-        $filter->setValidSearchFields($this->validSearchFields);;
-        $filter->setDefaultValues($this->defaultValues);
-        $filter->setQueryString($query);
+        $filter->setValidSearchFields(static::$validSearchFields);;
+        $filter->setDefaultValues(static::$defaultValues);
+        if (null !== $query) {
+            $filter->setQueryString($query);
+        }
         return $filter;
     }
 }
