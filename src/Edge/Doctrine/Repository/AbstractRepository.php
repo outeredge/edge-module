@@ -92,4 +92,13 @@ class AbstractRepository extends EntityRepository
 
         return $qb;
     }
+    
+    public function getFilter($query)
+    {
+        $filter = new Filter();
+        $filter->setValidSearchFields($this->validSearchFields);;
+        $filter->setDefaultValues($this->defaultValues);
+        $filter->setQueryString($query);
+        return $filter;
+    }
 }
