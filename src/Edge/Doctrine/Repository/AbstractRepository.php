@@ -4,18 +4,10 @@ namespace Edge\Doctrine\Repository;
 
 use Doctrine\ORM\EntityRepository;
 use Doctrine\ORM\QueryBuilder;
+use Edge\Search\Filter;
 
 class AbstractRepository extends EntityRepository
 {
-
-    const PARAM_SORT  = 'sort';
-    const PARAM_ORDER = 'order';
-
-    const ORDER_DESC = 'desc';
-    const ORDER_ASC  = 'asc';
-
-    const QUERY_REGEX = '/([a-zA-Z\-]+)(:|!)((?:\([^)]+?\)|[^( ]+))/';
-
     /**
      * Allowed search fields
      * @var array
@@ -34,91 +26,47 @@ class AbstractRepository extends EntityRepository
      */
     protected $defaultValues = array();
 
-
     /**
-     * Google style search by David
-     *  - Wrap parameters in brackets if is more than one word
-     *  - All non parameter text is gathered into keyword variable
+     * Add filter to QueryBuilder
      *
-     * @param string $query
-     * @param \Doctrine\ORM\QueryBuilder $qb
-     * @param string $sort
-     * @param string $order
-     * @return \Doctrine\ORM\QueryBuilder
+     * @param Filter $filter
+     * @param Doctrine\ORM\QueryBuilder $qb
+     * @return Doctrine\ORM\QueryBuilder
      */
-    public function findByQuery($query, QueryBuilder &$qb, $sort = null, $order = self::ORDER_DESC)
+    public function getFilteredQueryBuilder(Filter $filter, QueryBuilder &$qb)
     {
-        $query = strtolower($query);
-        preg_match_all(self::QUERY_REGEX, $query, $params);
-        $keyword = trim(str_replace('  ', ' ', preg_replace(self::QUERY_REGEX, '', $query)));
-
         $orXs  = array();
         $i = 1;
-        foreach ($params[1] as $key => $field) {
-            $value = $params[3][$key];
+
+        foreach ($filter->getAllFieldValues() as $field => $data) {
             $i++;
+            $value = $data['value'];
 
-            if ($field == self::PARAM_SORT) {
-                if (isset($this->validSearchFields[$value])) {
-                    $sort = $this->validSearchFields[$value];
-                }
-                continue;
+            if (!isset($orXs[$field])) {
+                $orXs[$field] = $qb->expr()->orX();
             }
 
-            if ($field == self::PARAM_ORDER) {
-                if ($value != self::ORDER_DESC) {
-                    $order = self::ORDER_ASC;
-                }
-                continue;
-            }
-
-            if (isset($this->validSearchFields[$field])) {
-                if (!isset($orXs[$field])) {
-                    $orXs[$field] = $qb->expr()->orX();
-                }
-
-                $equals = $params[2][$key] == ':' ? true : false;
-                if ($equals) {
-                    if ($value == 'null') {
-                        $orXs[$field]->add($this->validSearchFields[$field] . ' IS NULL');
-                    } else {
-                        $value = str_replace(array('(', ')'), '', $value);
-                        if (strstr($value, ',')) {
-                            $orXs[$field]->add($qb->expr()->in($this->validSearchFields[$field], ':'.$field.$i));
-                            $qb->setParameter($field . $i, explode(',', $value));
-                        } else {
-                            $orXs[$field]->add($qb->expr()->eq($this->validSearchFields[$field], ':'.$field.$i));
-                            $qb->setParameter($field . $i, $value);
-                        }
-                    }
-                    ;
+            if ($data['equals']) {
+                if (null === $value) {
+                    $orXs[$field]->add($filter->validSearchFields[$field] . ' IS NULL');
                 } else {
-                    if ($value == 'null') {
-                        $orXs[$field]->add('NOT '. $this->validSearchFields[$field] . ' IS NULL');
+                    if (is_array($value)) {
+                        $orXs[$field]->add($qb->expr()->in($this->validSearchFields[$field], ':'.$field.$i));
                     } else {
-                        $value = str_replace(array('(', ')'), '', $value);
-                        if (strstr($value, ',')) {
-                            $orXs[$field]->add($qb->expr()->notIn($this->validSearchFields[$field], ':'.$field.$i));
-                            $qb->setParameter($field . $i, explode(',', $value));
-                        } else {
-                            $orXs[$field]->add($qb->expr()->neq($this->validSearchFields[$field], ':'.$field.$i));
-                            $qb->setParameter($field . $i, $value);
-                        }
+                        $orXs[$field]->add($qb->expr()->eq($this->validSearchFields[$field], ':'.$field.$i));
                     }
+                    $qb->setParameter($field . $i, $value);
                 }
-                continue;
-            }
-        }
-
-        if (count($this->defaultValues)) {
-            foreach ($this->defaultValues as $defaultField => $defaultValue) {
-                $i++;
-                if (!isset($orXs[$defaultField])) {
-                    if (isset($this->validSearchFields[$defaultField])) {
-                        $orXs[$defaultField] = $qb->expr()->eq($this->validSearchFields[$defaultField], ':'.$defaultField.$i);
-                        $qb->setParameter($defaultField . $i, $defaultValue);
-                        continue;
+            } else {
+                if (null === $value) {
+                    $orXs[$field]->add('NOT '. $this->validSearchFields[$field] . ' IS NULL');
+                } else {
+                    if (is_array($value)) {
+                        $orXs[$field]->add($qb->expr()->notIn($this->validSearchFields[$field], ':'.$field.$i));
+                    } else {
+                        $orXs[$field]->add($qb->expr()->neq($this->validSearchFields[$field], ':'.$field.$i));
                     }
+                    $qb->setParameter($field . $i, $value);
                 }
             }
         }
@@ -129,20 +77,19 @@ class AbstractRepository extends EntityRepository
             }
         }
 
-        if ($keyword != '' && count($this->keywordSearchFields)) {
+        if (null !== $filter->getKeywords() && count($this->keywordSearchFields)) {
             $orX = $qb->expr()->orX();
             foreach ($this->keywordSearchFields as $kfield) {
                 $orX->add($qb->expr()->like($kfield,  ':keyword'));
             }
             $qb->andWhere($orX);
-            $qb->setParameter('keyword', '%'.$keyword.'%');
+            $qb->setParameter('keyword', '%'.$filter->getKeywords().'%');
         }
 
-        if (null !== $sort) {
-            $qb->orderBy($sort, $order);
+        if (null !== $filter->getSortField()) {
+            $qb->orderBy($filter->getSortField(), $filter->getSortOrder());
         }
 
         return $qb;
     }
-
 }
