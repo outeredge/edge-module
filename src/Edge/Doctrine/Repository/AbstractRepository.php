@@ -12,7 +12,7 @@ abstract class AbstractRepository extends EntityRepository
      * Allowed search fields
      * @var array
      */
-    protected static $validSearchFields = array('test');
+    protected static $validSearchFields = array();
 
     /**
      * Fields to apply a %like% search to
