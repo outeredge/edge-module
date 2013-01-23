@@ -27,6 +27,11 @@ abstract class AbstractRepository extends EntityRepository
     protected static $defaultValues = array();
 
     /**
+     * @var Filter
+     */
+    protected static $filter;
+
+    /**
      * Add filter to QueryBuilder
      *
      * @param Filter $filter
@@ -95,12 +100,33 @@ abstract class AbstractRepository extends EntityRepository
 
     public static function getFilter($query = null)
     {
-        $filter = new Filter();
-        $filter->setValidSearchFields(static::$validSearchFields);;
-        $filter->setDefaultValues(static::$defaultValues);
-        if (null !== $query) {
-            $filter->setQueryString($query);
+        if (null === static::$filter || null !== $query) {
+            $filter = new Filter();
+            $filter->setValidSearchFields(static::$validSearchFields);;
+            $filter->setDefaultValues(static::$defaultValues);
+            if (null !== $query) {
+                $filter->setQueryString($query);
+            }
+            static::$filter = $filter;
         }
-        return $filter;
+        return static::$filter;
+    }
+
+    public function persist($entity)
+    {
+        $this->getEntityManager()->persist($entity);
+        return $this;
+    }
+
+    public function remove($entity)
+    {
+        $this->getEntityManager()->remove($entity);
+        return $this;
+    }
+
+    protected function flush($entity = null)
+    {
+        $this->getEntityManager()->flush($entity);
+        return $this;
     }
 }

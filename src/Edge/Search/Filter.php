@@ -218,4 +218,10 @@ class Filter
         }
         return $this;
     }
+
+    public function clear()
+    {
+        $this->data = array();
+        return $this;
+    }
 }
