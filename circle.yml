@@ -1,0 +1,8 @@
+dependencies:
+  cache_directories:
+    - "vendor"
+  override:
+    - composer install -n
+test:
+  override:
+    - cd tests && phpunit
