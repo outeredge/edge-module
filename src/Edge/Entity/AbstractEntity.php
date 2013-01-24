@@ -1,6 +1,6 @@
 <?php
 
-namespace Edge\Doctrine\Entity;
+namespace Edge\Entity;
 
 use ArrayAccess;
 use Zend\InputFilter\InputFilter;
