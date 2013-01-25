@@ -41,6 +41,13 @@ abstract class AbstractDoctrineRepository extends EntityRepository implements Re
      */
     protected $events;
 
+    /**
+     * Event identifier
+     *
+     * @var string
+     */
+    protected $eventIdentifier = 'Edge';
+
      /**
      * Set the event manager instance used by this context
      *
@@ -171,7 +178,7 @@ abstract class AbstractDoctrineRepository extends EntityRepository implements Re
     public function save(AbstractEntity $entity, $immediate = true)
     {
         $this->getEntityManager()->persist($entity);
-        $this->commit($entity, $immediate);
+        $this->flush($entity, $immediate);
         return $this;
     }
 
@@ -182,7 +189,7 @@ abstract class AbstractDoctrineRepository extends EntityRepository implements Re
      */
     public function update(AbstractEntity $entity, $immediate = false)
     {
-        $this->commit($entity, $immediate);
+        $this->flush($entity, $immediate);
         return $this;
     }
 
@@ -194,7 +201,7 @@ abstract class AbstractDoctrineRepository extends EntityRepository implements Re
     public function delete(AbstractEntity $entity, $immediate = false)
     {
         $this->getEntityManager()->remove($entity);
-        $this->commit($entity, $immediate);
+        $this->flush($entity, $immediate);
         return $this;
     }
 
@@ -204,7 +211,7 @@ abstract class AbstractDoctrineRepository extends EntityRepository implements Re
      * @param AbstractEntity $entity entity to flush, leave null for all
      * @param bool $immediate immediately flush the entity(s)
      */
-    protected function commit(AbstractEntity $entity = null, $immediate = false)
+    protected function flush(AbstractEntity $entity = null, $immediate = false)
     {
         $params = compact('entity', 'immediate');
         $this->getEventManager()->trigger(__FUNCTION__, $this->getEntityManager(), $params);

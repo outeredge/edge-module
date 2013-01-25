@@ -20,7 +20,6 @@ abstract class AbstractDoctrineTestCase extends AbstractTestCase
 
     protected $provider;
 
-
     protected function setUp()
     {
         parent::setUp();
@@ -101,12 +100,17 @@ abstract class AbstractDoctrineTestCase extends AbstractTestCase
         $this->getEntityManager()->clear();
     }
 
+    protected function getRepository($entityClass)
+    {
+        return $this->getEntityManager()->getRepository($entityClass);
+    }
+
     /**
      * @return \Doctrine\ORM\EntityManager
      */
     protected function getEntityManager()
     {
-        return $this->serviceManager->get($this->entityManagerAlias);
+        return $this->getServiceManager()->get($this->entityManagerAlias);
     }
 
     /**
