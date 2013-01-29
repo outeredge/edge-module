@@ -106,6 +106,17 @@ abstract class AbstractDoctrineTestCase extends AbstractTestCase
     }
 
     /**
+     * Get a fixture by using a simple {find} on the EM
+     *
+     * @param string $class
+     * @param int $id
+     */
+    protected function getFixture($class, $id)
+    {
+        return $this->getEntityManager()->find($class, $id);
+    }
+
+    /**
      * @return \Doctrine\ORM\EntityManager
      */
     protected function getEntityManager()
