@@ -15,22 +15,20 @@ abstract class AbstractTestCase extends PHPUnit_Framework_TestCase
 
     private $serviceManager;
 
-    protected function setUp()
-    {
-        $configuration = self::$applicationConfig;
-        $smConfig = isset($configuration['service_manager']) ? $configuration['service_manager'] : array();
-        $this->serviceManager = new ServiceManager(new ServiceManagerConfig($smConfig));
-        $this->serviceManager->setAllowOverride(true);
-        $this->serviceManager->setService('ApplicationConfig', $configuration);
-        $this->serviceManager->get('ModuleManager')->loadModules();
-
-    }
-
+    
     /**
      * @return \Zend\ServiceManager\ServiceManager
      */
     protected function getServiceManager()
     {
+        if (null === $this->serviceManager) {
+            $configuration = self::$applicationConfig;
+            $smConfig = isset($configuration['service_manager']) ? $configuration['service_manager'] : array();
+            $this->serviceManager = new ServiceManager(new ServiceManagerConfig($smConfig));
+            $this->serviceManager->setAllowOverride(true);
+            $this->serviceManager->setService('ApplicationConfig', $configuration);
+            $this->serviceManager->get('ModuleManager')->loadModules();
+        }
         return $this->serviceManager;
     }
 

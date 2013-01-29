@@ -11,8 +11,6 @@ abstract class AbstractMvcTestCase extends AbstractTestCase
 
     protected function setUp()
     {
-        parent::setUp();
-        
         $this->application = $this->getServiceManager()->get('Application');
         $this->application->bootstrap();
     }

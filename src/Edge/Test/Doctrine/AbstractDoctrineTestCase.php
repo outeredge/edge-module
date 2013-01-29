@@ -22,8 +22,6 @@ abstract class AbstractDoctrineTestCase extends AbstractTestCase
 
     protected function setUp()
     {
-        parent::setUp();
-
         if (self::$schemaExists) {
             if (!$this->getProvider()->restoreDatabase($this->getDatabaseName())) {
                 $this->loadFixtures(false);

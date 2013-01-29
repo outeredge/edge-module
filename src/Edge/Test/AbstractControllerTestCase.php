@@ -2,6 +2,7 @@
 
 namespace Edge\Test;
 
+use Zend\Console\Console;
 use Zend\Http\PhpEnvironment\Request;
 use Zend\Mvc\MvcEvent;
 use Zend\Mvc\Router\RouteMatch;
@@ -39,6 +40,8 @@ abstract class AbstractControllerTestCase extends AbstractMvcTestCase
     public function setUp()
     {
         parent::setUp();
+
+        Console::overrideIsConsole(false);
 
         $this->request    = new Request();
         $this->routeMatch = new RouteMatch(array('controller' => $this->controllerName));
