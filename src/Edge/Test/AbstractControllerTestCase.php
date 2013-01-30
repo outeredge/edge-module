@@ -49,9 +49,9 @@ abstract class AbstractControllerTestCase extends AbstractMvcTestCase
         $this->event->setRouteMatch($this->routeMatch);
 
         if (null === $this->controller) {
-        $this->controller = $this->getServiceManager()->get('ControllerLoader')->get($this->controllerName);
+            $this->controller = $this->getServiceManager()->get('ControllerLoader')->get($this->controllerName);
         }
-        
+
         $this->controller->setEvent($this->event);
     }
 }

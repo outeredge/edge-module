@@ -22,6 +22,8 @@ abstract class AbstractDoctrineTestCase extends AbstractTestCase
 
     protected function setUp()
     {
+        $this->getEntityManager(); //ensures local override is detected
+
         if (self::$schemaExists) {
             if (!$this->getProvider()->restoreDatabase($this->getDatabaseName())) {
                 $this->loadFixtures(false);
@@ -34,6 +36,7 @@ abstract class AbstractDoctrineTestCase extends AbstractTestCase
 
     protected function createSchema()
     {
+        echo 'CREATE';
         $this->getProvider()->deleteDatabase($this->getDatabaseName());
 
         $schemaTool = new SchemaTool($this->getEntityManager());
@@ -98,7 +101,7 @@ abstract class AbstractDoctrineTestCase extends AbstractTestCase
         $this->getEntityManager()->clear();
     }
 
-    public function getRepository($entityClass)
+    protected function getRepository($entityClass)
     {
         return $this->getEntityManager()->getRepository($entityClass);
     }

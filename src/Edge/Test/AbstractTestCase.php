@@ -15,7 +15,7 @@ abstract class AbstractTestCase extends PHPUnit_Framework_TestCase
 
     private $serviceManager;
 
-    
+
     /**
      * @return \Zend\ServiceManager\ServiceManager
      */
