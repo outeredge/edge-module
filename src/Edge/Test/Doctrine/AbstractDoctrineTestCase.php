@@ -36,7 +36,6 @@ abstract class AbstractDoctrineTestCase extends AbstractTestCase
 
     protected function createSchema()
     {
-        echo 'CREATE';
         $this->getProvider()->deleteDatabase($this->getDatabaseName());
 
         $schemaTool = new SchemaTool($this->getEntityManager());
