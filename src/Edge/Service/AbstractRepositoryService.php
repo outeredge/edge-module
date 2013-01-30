@@ -32,7 +32,7 @@ abstract class AbstractRepositoryService extends AbstractBaseService
     /**
      * @return RepositoryInterface
      */
-    protected function getRepository()
+    public function getRepository()
     {
         if (null === $this->repository) {
             throw new \RuntimeException('No repository is set on the service');

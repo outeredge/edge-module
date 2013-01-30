@@ -98,7 +98,7 @@ abstract class AbstractDoctrineTestCase extends AbstractTestCase
         $this->getEntityManager()->clear();
     }
 
-    protected function getRepository($entityClass)
+    public function getRepository($entityClass)
     {
         return $this->getEntityManager()->getRepository($entityClass);
     }
