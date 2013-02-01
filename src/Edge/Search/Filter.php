@@ -56,19 +56,10 @@ class Filter
         $params = array();
         preg_match_all(self::QUERY_REGEX, $query, $params);
         foreach ($params[1] as $key => $field) {
-            $value  = str_replace(array('(', ')'), '', $params[3][$key]);
+            $value = $this->processValue($params[3][$key]);
 
             if (isset($this->validSearchFields[$field])) {
                 $equals = $params[2][$key] == ':' ? true : false;
-
-                if ($value == 'null') {
-                    $value = null;
-                }
-
-                if (strstr($value, ',')) {
-                    $value = explode(',', $value);
-                }
-
                 $this->data[$field] = array(
                     'value'  => $value,
                     'equals' => $equals,
@@ -90,6 +81,26 @@ class Filter
                 continue;
             }
         }
+    }
+
+    private function processValue($value)
+    {
+        $value = str_replace(array('(', ')'), '', $value);
+
+        if ($value == 'null') {
+            return null;
+        }
+
+        if (strstr($value, ',')) {
+            $value = explode(',', $value);
+            foreach ($value as $key => &$val) {
+                if ($val == 'null') {
+                    $val = null;
+                }
+            }
+        }
+
+        return $value;
     }
 
     public function setFieldValue($field, $value, $equals = true)

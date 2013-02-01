@@ -114,6 +114,9 @@ abstract class AbstractDoctrineRepository extends EntityRepository implements Re
                     $orXs[$field]->add(static::$validSearchFields[$field] . ' IS NULL');
                 } else {
                     if (is_array($value)) {
+                        if (in_array(null, $value)) {
+                            $orXs[$field]->add(static::$validSearchFields[$field] . ' IS NULL');
+                        }
                         $orXs[$field]->add($qb->expr()->in(static::$validSearchFields[$field], ':'.$field.$i));
                     } else {
                         $orXs[$field]->add($qb->expr()->eq(static::$validSearchFields[$field], ':'.$field.$i));
@@ -125,6 +128,9 @@ abstract class AbstractDoctrineRepository extends EntityRepository implements Re
                     $orXs[$field]->add('NOT '. static::$validSearchFields[$field] . ' IS NULL');
                 } else {
                     if (is_array($value)) {
+                        if (in_array(null, $value)) {
+                            $orXs[$field]->add('NOT '. static::$validSearchFields[$field] . ' IS NULL');
+                        }
                         $orXs[$field]->add($qb->expr()->notIn(static::$validSearchFields[$field], ':'.$field.$i));
                     } else {
                         $orXs[$field]->add($qb->expr()->neq(static::$validSearchFields[$field], ':'.$field.$i));
