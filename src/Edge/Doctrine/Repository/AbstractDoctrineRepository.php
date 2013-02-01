@@ -156,7 +156,7 @@ abstract class AbstractDoctrineRepository extends EntityRepository implements Re
         }
 
         if (null !== $filter->getSortField()) {
-            $qb->orderBy($filter->getSortField(), $filter->getSortOrder());
+            $qb->orderBy(static::$validSearchFields[$filter->getSortField()], $filter->getSortOrder());
         }
 
         return $qb;
