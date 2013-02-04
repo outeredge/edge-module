@@ -39,9 +39,9 @@ abstract class AbstractControllerTestCase extends AbstractMvcTestCase
 
     public function setUp()
     {
-        parent::setUp();
-
         Console::overrideIsConsole(false);
+        
+        parent::setUp();
 
         $this->request    = new Request();
         $this->routeMatch = new RouteMatch(array('controller' => $this->controllerName));

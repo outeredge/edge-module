@@ -42,7 +42,7 @@ abstract class AbstractRestfulController extends RestfulController {
 
         $valid = false;
         foreach ($validTypes as $type) {
-            if (strstr($request->getHeaders()->get('Content-Type')->getFieldValue(), $type)) {
+            if ($request->getHeaders()->has('Content-Type') && strstr($request->getHeaders()->get('Content-Type')->getFieldValue(), $type)) {
                 $valid = true;
                 break;
             }
