@@ -53,4 +53,10 @@ abstract class AbstractTestCase extends PHPUnit_Framework_TestCase
     {
         self::$applicationConfig = $applicationConfig;
     }
+
+    public function tearDown()
+    {
+        unset($this->application);
+        unset($this->serviceManager);
+    }
 }
