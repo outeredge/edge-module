@@ -13,8 +13,25 @@ abstract class AbstractTestCase extends PHPUnit_Framework_TestCase
      */
     protected static $applicationConfig;
 
+    /**
+     * @var \Zend\Mvc\Application
+     */
+    private $application;
+
+    /**
+     * @var ServiceManager
+     */
     private $serviceManager;
 
+
+    protected function getApplication()
+    {
+        if (null === $this->application) {
+            $this->application = $this->getServiceManager()->get('Application');
+            $this->application->bootstrap();
+        }
+        return $this->application;
+    }
 
     /**
      * @return \Zend\ServiceManager\ServiceManager
