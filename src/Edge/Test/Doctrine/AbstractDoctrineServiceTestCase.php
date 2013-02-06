@@ -6,9 +6,9 @@ use Doctrine\ORM\Tools\SchemaTool;
 use Doctrine\Common\DataFixtures\Executor\ORMExecutor;
 use Doctrine\Common\DataFixtures\Purger\ORMPurger;
 use Doctrine\Common\DataFixtures\Loader;
-use Edge\Test\AbstractTestCase;
+use Edge\Test\AbstractRepositoryServiceTestCase;
 
-abstract class AbstractDoctrineTestCase extends AbstractTestCase
+abstract class AbstractDoctrineServiceTestCase extends AbstractRepositoryServiceTestCase
 {
     public static $schemaExists = false;
 
