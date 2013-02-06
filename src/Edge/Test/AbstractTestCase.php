@@ -23,6 +23,10 @@ abstract class AbstractTestCase extends PHPUnit_Framework_TestCase
      */
     private $serviceManager;
 
+    public function setUp()
+    {
+        $this->reset();
+    }
 
     protected function getApplication()
     {
@@ -52,6 +56,22 @@ abstract class AbstractTestCase extends PHPUnit_Framework_TestCase
     public static function setApplicationConfig($applicationConfig)
     {
         self::$applicationConfig = $applicationConfig;
+    }
+
+    /**
+     * Reset the request
+     *
+     * @return AbstractTestCase
+     */
+    public function reset()
+    {
+        $_SESSION = array();
+        $_GET     = array();
+        $_POST    = array();
+        $_COOKIE  = array();
+        $_FILES   = array();
+
+        return $this;
     }
 
     public function tearDown()

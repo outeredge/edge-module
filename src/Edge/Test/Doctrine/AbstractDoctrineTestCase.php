@@ -20,8 +20,10 @@ abstract class AbstractDoctrineTestCase extends AbstractTestCase
 
     protected $provider;
 
-    protected function setUp()
+    public function setUp()
     {
+        parent::setUp();
+
         $this->getEntityManager();
 
         if (self::$schemaExists) {

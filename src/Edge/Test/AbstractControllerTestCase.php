@@ -5,6 +5,7 @@ namespace Edge\Test;
 use PHPUnit_Framework_ExpectationFailedException;
 use PHPUnit_Framework_Exception;
 use Zend\Console\Console;
+use Zend\Http\Headers;
 use Zend\Http\PhpEnvironment\Request;
 use Zend\Mvc\MvcEvent;
 use Zend\Mvc\Router\RouteMatch;
@@ -49,6 +50,8 @@ abstract class AbstractControllerTestCase extends AbstractTestCase
         parent::setUp();
 
         $this->request    = new Request();
+        $this->request->setHeaders(new Headers());
+        
         $this->routeMatch = new RouteMatch(array('controller' => $this->controllerName));
 
         $this->event = $this->getApplication()->getMvcEvent();
