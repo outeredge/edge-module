@@ -51,7 +51,7 @@ abstract class AbstractControllerTestCase extends AbstractTestCase
 
         $this->request    = new Request();
         $this->request->setHeaders(new Headers());
-        
+
         $this->routeMatch = new RouteMatch(array('controller' => $this->controllerName));
 
         $this->event = $this->getApplication()->getMvcEvent();
@@ -67,6 +67,15 @@ abstract class AbstractControllerTestCase extends AbstractTestCase
         }
 
         $this->controller->setEvent($this->event);
+    }
+
+    public function tearDown()
+    {
+        parent::tearDown();
+        unset($this->controller);
+        unset($this->event);
+        unset($this->request);
+        unset($this->routeMatch);
     }
 
     protected function setController(AbstractController $controller)

@@ -23,7 +23,7 @@ abstract class AbstractTestCase extends PHPUnit_Framework_TestCase
      */
     private $serviceManager;
 
-    
+
     public function setUp()
     {
         $this->reset();

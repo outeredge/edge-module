@@ -10,38 +10,61 @@ use Edge\Test\AbstractRepositoryServiceTestCase;
 
 abstract class AbstractDoctrineServiceTestCase extends AbstractRepositoryServiceTestCase
 {
+    /**
+     * @var boolean
+     */
     public static $schemaExists = false;
 
+    /**
+     * @var string
+     */
     protected $entityManagerAlias = 'EntityManager';
 
+    /**
+     * @var string
+     */
     protected $platform;
 
+    /**
+     * @var string
+     */
     protected $database;
 
+    /**
+     * @var Provider\ProviderInterface
+     */
     protected $provider;
 
-    public function setUp()
+    /**
+     * @var \Doctrine\ORM\EntityManager
+     */
+    private $entityManager;
+
+    /**
+     * Generate the database, will restore a fresh copy if the schema already exists
+     *
+     * @return AbstractDoctrineServiceTestCase
+     */
+    protected function generateDatabase()
     {
-        parent::setUp();
-
-        $this->getEntityManager();
-
         if (self::$schemaExists) {
             if (!$this->getProvider()->restoreDatabase($this->getDatabaseName())) {
                 $this->loadFixtures(false);
             }
-            return;
+            return $this;;
         }
 
         $this->createSchema();
+
+        return $this;
     }
 
-    protected function createSchema()
+    private function createSchema()
     {
         $this->getProvider()->deleteDatabase($this->getDatabaseName());
 
-        $schemaTool = new SchemaTool($this->getEntityManager());
-        $schemaTool->createSchema($this->getEntityManager()->getMetadataFactory()->getAllMetadata());
+        $schemaTool = new SchemaTool($this->entityManager);
+        $schemaTool->createSchema($this->entityManager->getMetadataFactory()->getAllMetadata());
 
         $this->loadFixtures();
 
@@ -50,7 +73,7 @@ abstract class AbstractDoctrineServiceTestCase extends AbstractRepositoryService
         self::$schemaExists = true;
     }
 
-    protected function loadFixtures($append = true)
+    private function loadFixtures($append = true)
     {
         $fixtureLoader = new Loader();
         $fixtureLoader->loadFromDirectory($this->getFixturePath());
@@ -61,22 +84,22 @@ abstract class AbstractDoctrineServiceTestCase extends AbstractRepositoryService
             $purger = new ORMPurger();
         }
 
-        $executor = new ORMExecutor($this->getEntityManager(), $purger);
+        $executor = new ORMExecutor($this->entityManager, $purger);
         $executor->execute($fixtureLoader->getFixtures(), $append);
     }
 
-    protected function getPlatform()
+    private function getPlatform()
     {
         if (null === $this->platform) {
-            $this->platform = ucfirst($this->getEntityManager()->getConnection()->getDatabasePlatform()->getName());
+            $this->platform = ucfirst($this->entityManager->getConnection()->getDatabasePlatform()->getName());
         }
         return $this->platform;
     }
 
-    protected function getDatabaseName()
+    private function getDatabaseName()
     {
         if (null === $this->database) {
-            $this->database = $this->getEntityManager()->getConnection()->getDatabase();
+            $this->database = $this->entityManager->getConnection()->getDatabase();
         }
         return $this->database;
     }
@@ -84,7 +107,7 @@ abstract class AbstractDoctrineServiceTestCase extends AbstractRepositoryService
     /**
      * @return Provider\ProviderInterface
      */
-    protected function getProvider()
+    private function getProvider()
     {
         if (null == $this->provider) {
             $providerClass = 'Edge\\Test\\Doctrine\\Provider\\' . $this->getPlatform();
@@ -92,12 +115,12 @@ abstract class AbstractDoctrineServiceTestCase extends AbstractRepositoryService
                 throw new \Exception('Unsupported database provider type');
             }
             $this->provider = new $providerClass;
-            $this->provider->setEntityManager($this->getEntityManager());
+            $this->provider->setEntityManager($this->entityManager);
         }
         return $this->provider;
     }
 
-    protected function getRepository($entityClass)
+    public function getRepository($entityClass)
     {
         return $this->getEntityManager()->getRepository($entityClass);
     }
@@ -108,7 +131,7 @@ abstract class AbstractDoctrineServiceTestCase extends AbstractRepositoryService
      * @param string $class
      * @param int $id
      */
-    protected function getFixture($class, $id)
+    public function getFixture($class, $id)
     {
         return $this->getEntityManager()->find($class, $id);
     }
@@ -116,13 +139,25 @@ abstract class AbstractDoctrineServiceTestCase extends AbstractRepositoryService
     /**
      * @return \Doctrine\ORM\EntityManager
      */
-    protected function getEntityManager()
+    public function getEntityManager()
     {
-        return $this->getServiceManager()->get($this->entityManagerAlias);
+        if (null === $this->entityManager) {
+            $serviceManager = $this->getServiceManager();
+            $this->entityManager = $serviceManager->get($this->entityManagerAlias);
+            $this->generateDatabase();
+        }
+        return $this->entityManager;
+    }
+
+    public function tearDown()
+    {
+        parent::tearDown();
+        unset($this->entityManager);
+        unset($this->provider);
     }
 
     /**
      * @return string
      */
-    abstract protected function getFixturePath();
+    abstract public function getFixturePath();
 }
