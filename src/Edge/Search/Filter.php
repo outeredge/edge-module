@@ -25,11 +25,7 @@ class Filter
      */
     protected $validSearchFields = array();
 
-    /**
-     * Array of field names and their default values
-     * @var array
-     */
-    protected $defaultValues = array();
+    protected $replaceValues = array();
 
     protected $data = array();
 
@@ -46,8 +42,6 @@ class Filter
             throw new \Exception('No search fields were specified');
         }
 
-        $this->data = $this->defaultValues;
-
         $keywords = trim(str_replace('  ', ' ', preg_replace(self::QUERY_REGEX, '', $query)));
         if ($keywords !== '') {
             $this->keywords = $keywords;
@@ -60,10 +54,7 @@ class Filter
 
             if (isset($this->validSearchFields[$field])) {
                 $equals = $params[2][$key] == ':' ? true : false;
-                $this->data[$field] = array(
-                    'value'  => $value,
-                    'equals' => $equals,
-                );
+                $this->setFieldValue($field, $value, $equals);
                 continue;
             }
 
@@ -105,7 +96,8 @@ class Filter
 
     public function setFieldValue($field, $value, $equals = true)
     {
-        if (array_key_exists($field, $this->validSearchFields)) {
+        if (isset($this->validSearchFields[$field])) {
+            $value = $this->replaceValue($field, $value);
             $this->data[$field] = array(
                 'value'  => $value,
                 'equals' => $equals,
@@ -118,39 +110,36 @@ class Filter
 
     public function getFieldValue($field)
     {
-        if (array_key_exists($field, $this->data)) {
+        if (isset($this->data[$field])) {
             return $this->data[$field];
         }
-
-        if (array_key_exists($field, $this->defaultValues)) {
-            return $this->defaultValues[$field];
-        }
-
         return null;
     }
 
     public function getAllFieldValues()
     {
-        return array_merge($this->defaultValues, $this->data);
+        return $this->data;
     }
 
-    public function setQueryString($filter)
+    public function setQueryString($query)
     {
-        $this->extract($filter);
+        $this->extract($query);
         return $this;
     }
 
     /**
+     * Get the resulting query string
      *
      * @return string
      */
     public function getQueryString()
     {
+        $filterStr = '';
+
         if (empty($this->data)) {
-            return;
+            return $filterStr;
         }
 
-        $filterStr = '';
         foreach ($this->data as $field => $value) {
             $filterStr.= $field . ($value['equals']?':':'!') . $value['value'] . ' ';
         }
@@ -218,16 +207,48 @@ class Filter
 
     public function setDefaultValues(array $values)
     {
-        foreach ($values as $key => $value) {
-            if (!is_array($value)) {
-                $value = array(
-                    'value' => $value,
-                    'equals' => true
-                );
+        foreach ($values as $field => $value) {
+            $equals = true;
+            if (is_array($value)) {
+                $value = $value['value'];
+                $equals = isset($value['equals']) ? $value['equals'] : true;
             }
-            $this->defaultValues[$key] = $value;
+            $this->setFieldValue($field, $value, $equals);
         }
+
         return $this;
+    }
+
+    /**
+     * Set replace values
+     *
+     * @param array $values An array of fields containing key value pair arrays,
+     *                      where the key equals the expected string and the value
+     *                      equals the replacement string
+     * @return Filter
+    */
+    public function setReplaceValues(array $values)
+    {
+        $this->replaceValues = $values;
+        return $this;
+    }
+
+    public function getReplaceValues()
+    {
+        return $this->replaceValues;
+    }
+
+    protected function replaceValue($field, $value)
+    {
+        if (isset($this->replaceValues[$field]) && is_array($this->replaceValues[$field])) {
+            foreach($this->replaceValues[$field] as $old => $new) {
+                if ($value == $old) {
+                    $value = $new;
+                    break;
+                }
+            }
+        }
+        return $value;
     }
 
     public function clear()

@@ -162,15 +162,18 @@ abstract class AbstractDoctrineRepository extends EntityRepository implements Re
         return $qb;
     }
 
-    public static function getFilter($query = null)
+    /**
+     * Get Filter class populated with repositories search fields
+     *
+     * @param string $query
+     * @return Filter
+     */
+    public static function getFilter()
     {
-        if (null === static::$filter || null !== $query) {
+        if (null === static::$filter) {
             $filter = new Filter();
             $filter->setValidSearchFields(static::$validSearchFields);;
             $filter->setDefaultValues(static::$defaultValues);
-            if (null !== $query) {
-                $filter->setQueryString($query);
-            }
             static::$filter = $filter;
         }
         return static::$filter;
