@@ -2,9 +2,9 @@
 
 namespace Edge\Doctrine\Repository;
 
-use Edge\Entity\Repository\RepositoryInterface;
-use Edge\Search\Filter;
 use Edge\Entity\AbstractEntity;
+use Edge\Entity\Repository\RepositoryInterface;
+use Edge\Doctrine\Search\Filter;
 use Doctrine\ORM\EntityRepository;
 use Doctrine\ORM\QueryBuilder;
 use Zend\EventManager\EventManager;
@@ -24,6 +24,12 @@ abstract class AbstractDoctrineRepository extends EntityRepository implements Re
      * @var array
      */
     protected static $keywordSearchFields = array();
+
+    /**
+     * Mappings between entity property and join alias
+     * @var array
+     */
+    protected static $joinTableAliases = array();
 
     /**
      * Array of field names and their default values
@@ -90,82 +96,21 @@ abstract class AbstractDoctrineRepository extends EntityRepository implements Re
     }
 
     /**
-     * Add filter to QueryBuilder
+     * Create a filtered query builder
      *
-     * @param Filter $filter
-     * @param Doctrine\ORM\QueryBuilder $qb
-     * @return Doctrine\ORM\QueryBuilder
+     * @param string $query
+     * @param string $alias
+     * @return \Doctrine\ORM\QueryBuilder
      */
-    public function getFilteredQueryBuilder(Filter $filter, QueryBuilder &$qb)
+    public function createFilteredQueryBuilder($query, $alias)
     {
-        $orXs  = array();
-        $i = 1;
-
-        foreach ($filter->getAllFieldValues() as $field => $data) {
-            $i++;
-            $value = $data['value'];
-
-            if (!isset($orXs[$field])) {
-                $orXs[$field] = $qb->expr()->orX();
-            }
-
-            if ($data['equals']) {
-                if (null === $value) {
-                    $orXs[$field]->add(static::$validSearchFields[$field] . ' IS NULL');
-                } else {
-                    if (is_array($value)) {
-                        if (in_array(null, $value)) {
-                            $orXs[$field]->add(static::$validSearchFields[$field] . ' IS NULL');
-                        }
-                        $orXs[$field]->add($qb->expr()->in(static::$validSearchFields[$field], ':'.$field.$i));
-                    } else {
-                        $orXs[$field]->add($qb->expr()->eq(static::$validSearchFields[$field], ':'.$field.$i));
-                    }
-                    $qb->setParameter($field . $i, $value);
-                }
-            } else {
-                if (null === $value) {
-                    $orXs[$field]->add('NOT '. static::$validSearchFields[$field] . ' IS NULL');
-                } else {
-                    if (is_array($value)) {
-                        if (in_array(null, $value)) {
-                            $orXs[$field]->add('NOT '. static::$validSearchFields[$field] . ' IS NULL');
-                        }
-                        $orXs[$field]->add($qb->expr()->notIn(static::$validSearchFields[$field], ':'.$field.$i));
-                    } else {
-                        $orXs[$field]->add($qb->expr()->neq(static::$validSearchFields[$field], ':'.$field.$i));
-                    }
-                    $qb->setParameter($field . $i, $value);
-                }
-            }
-        }
-
-        if (count($orXs)) {
-            foreach ($orXs as $where) {
-                $qb->andWhere($where);
-            }
-        }
-
-        if (null !== $filter->getKeywords() && count(static::$keywordSearchFields)) {
-            $orX = $qb->expr()->orX();
-            foreach (static::$keywordSearchFields as $kfield) {
-                $orX->add($qb->expr()->like($kfield,  ':keyword'));
-            }
-            $qb->andWhere($orX);
-            $qb->setParameter('keyword', '%'.$filter->getKeywords().'%');
-        }
-
-        if (null !== $filter->getSortField()) {
-            $qb->orderBy(static::$validSearchFields[$filter->getSortField()], $filter->getSortOrder());
-        }
-
-        return $qb;
+        $qb = $this->createQueryBuilder($alias);
+        return $this->getFilter()->setQueryString($query)->populateQueryBuilder($qb);
     }
 
     /**
      * Get Filter class populated with repositories search fields
      *
-     * @param string $query
      * @return Filter
      */
     public static function getFilter()
@@ -174,6 +119,8 @@ abstract class AbstractDoctrineRepository extends EntityRepository implements Re
             $filter = new Filter();
             $filter->setValidSearchFields(static::$validSearchFields);;
             $filter->setDefaultValues(static::$defaultValues);
+            $filter->setJoinTableAliases(static::$joinTableAliases);
+            $filter->setKeywordSearchFields(static::$keywordSearchFields);
             static::$filter = $filter;
         }
         return static::$filter;

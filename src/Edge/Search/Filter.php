@@ -17,7 +17,11 @@ class Filter
     const ORDER_DESC = 'desc';
     const ORDER_ASC  = 'asc';
 
-    const QUERY_REGEX = '/([a-zA-Z\-]+)(:|!)((?:\([^)]+?\)|[^( ]+))/';
+    const COMPARISON_EQUALS     = ':';
+    const COMPARISON_NOT_EQUALS = '!';
+    const COMPARISON_LIKE       = '~';
+
+    const QUERY_REGEX = '/([a-zA-Z-\.]+)(:|!|~)((?:\([^)]+?\)|[^( ]+))/';
 
     /**
      * Allowed search fields
@@ -29,9 +33,9 @@ class Filter
 
     protected $data = array();
 
-    protected $keywords;
+    protected $keywords = null;
 
-    protected $sort;
+    protected $sort = null;
 
     protected $order = self::ORDER_DESC;
 
@@ -53,8 +57,7 @@ class Filter
             $value = $this->processValue($params[3][$key]);
 
             if (isset($this->validSearchFields[$field])) {
-                $equals = $params[2][$key] == ':' ? true : false;
-                $this->setFieldValue($field, $value, $equals);
+                $this->setFieldValue($field, $value, $params[2][$key]);
                 continue;
             }
 
@@ -94,13 +97,13 @@ class Filter
         return $value;
     }
 
-    public function setFieldValue($field, $value, $equals = true)
+    public function setFieldValue($field, $value, $comparison = self::COMPARISON_EQUALS)
     {
         if (isset($this->validSearchFields[$field])) {
             $value = $this->replaceValue($field, $value);
             $this->data[$field] = array(
-                'value'  => $value,
-                'equals' => $equals,
+                'value'      => $value,
+                'comparison' => $comparison,
             );
         } else {
             throw new \Exception("Invalid field [$field] specified");
@@ -137,15 +140,15 @@ class Filter
         $filterStr = '';
 
         if (empty($this->data)) {
-            return $filterStr;
+            return $this->getKeywords();
         }
 
         foreach ($this->data as $field => $value) {
-            $filterStr.= $field . ($value['equals']?':':'!') . $value['value'] . ' ';
+            $filterStr.= $field . $value['comparison'] . $value['value'] . ' ';
         }
 
         if (null !== $this->sort) {
-            $filterStr.= self::PARAM_SORT . ':' . $this->sort . ' ' . self::PARAM_ORDER . ':' . $this->order . ' ';
+            $filterStr.= self::PARAM_SORT . self::COMPARISON_EQUALS . $this->sort . ' ' . self::PARAM_ORDER . self::COMPARISON_EQUALS . $this->order . ' ';
         }
 
         $filterStr.= $this->getKeywords();
@@ -208,12 +211,12 @@ class Filter
     public function setDefaultValues(array $values)
     {
         foreach ($values as $field => $value) {
-            $equals = true;
+            $comparison = self::COMPARISON_EQUALS;
             if (is_array($value)) {
                 $value = $value['value'];
-                $equals = isset($value['equals']) ? $value['equals'] : true;
+                $comparison = isset($value['comparison']) ? $value['comparison'] : $comparison;
             }
-            $this->setFieldValue($field, $value, $equals);
+            $this->setFieldValue($field, $value, $comparison);
         }
 
         return $this;
