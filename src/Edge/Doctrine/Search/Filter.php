@@ -33,10 +33,17 @@ class Filter extends BaseFilter
             }
 
             if (substr_count($field, '.')) {
-                $joinAlias = strstr($field, '.', true);
-                if (!isset($joins[$joinAlias]) && isset($this->joinTableAliases[$joinAlias])) {
-                    $qb->join($qb->getRootAlias() . '.' . $joinAlias, $this->joinTableAliases[$joinAlias]);
-                    $joins[$joinAlias] = true;
+                $joinName = strstr($field, '.', true);
+                if (!isset($joins[$joinName]) && isset($this->joinTableAliases[$joinName])) {
+                    if (is_array($this->joinTableAliases[$joinName])) {
+                        $qb->join(
+                            $qb->getRootAlias() . '.' . $this->joinTableAliases[$joinName]['property'],
+                            $this->joinTableAliases[$joinName]['alias']
+                        );
+                    } else {
+                        $qb->join($qb->getRootAlias() . '.' . $joinName, $this->joinTableAliases[$joinName]);
+                    }
+                    $joins[$joinName] = true;
                 }
             }
 
