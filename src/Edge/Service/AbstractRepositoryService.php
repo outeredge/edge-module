@@ -83,7 +83,7 @@ abstract class AbstractRepositoryService extends AbstractBaseService
             $form = $this->getForm();
         }
 
-        $result = $this->bind($entity, $values, $form);
+        $result = $this->hydrate($entity, $values, $form);
 
         if (!$result instanceof AbstractEntity) {
             return false;
@@ -108,7 +108,7 @@ abstract class AbstractRepositoryService extends AbstractBaseService
             $form = $this->getEditForm();
         }
 
-        $result = $this->bind($entity, $values, $form);
+        $result = $this->hydrate($entity, $values, $form);
 
         if ($result instanceof AbstractEntity) {
             $this->getRepository()->update($result);
@@ -129,16 +129,20 @@ abstract class AbstractRepositoryService extends AbstractBaseService
     }
 
     /**
-     * Bind an array of data onto an entity using form
+     * Hydrate an array of data onto an entity using a form
      *
      * @param AbstractEntity $entity
      * @param array $values
      * @param Form $form
      * @return AbstractEntity
      */
-    private function bind(AbstractEntity $entity, array $values, Form $form)
+    private function hydrate(AbstractEntity $entity, array $values, Form $form)
     {
-        $form->bind($entity);
+        if ($form->getBaseFieldset()) {
+            $form->getBaseFieldset()->setObject($entity);
+        }
+
+        $form->setObject($entity);
         $form->setData($values);
 
         if (!$form->isValid()) {
