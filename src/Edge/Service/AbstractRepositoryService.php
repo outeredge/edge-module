@@ -108,6 +108,12 @@ abstract class AbstractRepositoryService extends AbstractBaseService
             $form = $this->getEditForm();
         }
 
+        $validationGroup = $form->getValidationGroup();
+        foreach ($validationGroup as $fieldset => $fields) {
+            $validationGroup[$fieldset] = array_flip(array_intersect_key(array_flip($fields), $values[$fieldset]));
+        }
+        $form->setValidationGroup($validationGroup);
+
         $result = $this->hydrate($entity, $values, $form);
 
         if ($result instanceof AbstractEntity) {
@@ -138,11 +144,11 @@ abstract class AbstractRepositoryService extends AbstractBaseService
      */
     private function hydrate(AbstractEntity $entity, array $values, Form $form)
     {
+        $form->setObject($entity);
         if ($form->getBaseFieldset()) {
             $form->getBaseFieldset()->setObject($entity);
         }
 
-        $form->setObject($entity);
         $form->setData($values);
 
         if (!$form->isValid()) {

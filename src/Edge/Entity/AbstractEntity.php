@@ -3,17 +3,9 @@
 namespace Edge\Entity;
 
 use ArrayAccess;
-use Zend\InputFilter\InputFilter;
-use Zend\InputFilter\InputFilterAwareInterface;
-use Zend\InputFilter\InputFilterInterface;
 
-abstract class AbstractEntity implements ArrayAccess, InputFilterAwareInterface
+abstract class AbstractEntity implements ArrayAccess
 {
-    /**
-     * @var InputFilterInterface
-     */
-    protected $inputFilter;
-
     public function offsetExists($offset)
     {
         $method = 'get' . ucfirst($offset);
@@ -37,19 +29,5 @@ abstract class AbstractEntity implements ArrayAccess, InputFilterAwareInterface
     public function offsetUnset($offset)
     {
         throw new BadMethodCallException("Array access of class " . get_class($this) . " is read-only!");
-    }
-
-    public function setInputFilter(InputFilterInterface $inputFilter)
-    {
-        $this->inputFilter = $inputFilter;
-        return $this;
-    }
-
-    public function getInputFilter()
-    {
-        if (null === $this->inputFilter) {
-            $this->inputFilter = new InputFilter();
-        }
-        return $this->inputFilter;
     }
 }
