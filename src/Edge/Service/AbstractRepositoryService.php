@@ -109,10 +109,26 @@ abstract class AbstractRepositoryService extends AbstractBaseService
         }
 
         $validationGroup = $form->getValidationGroup();
-        foreach ($validationGroup as $fieldset => $fields) {
-            $validationGroup[$fieldset] = array_flip(array_intersect_key(array_flip($fields), $values[$fieldset]));
+        if ($validationGroup !== null) {
+            foreach ($validationGroup as $fieldset => &$fields) {
+                foreach ($fields as $key => $field) {
+                    if (is_int($key)) {
+                        unset($validationGroup[$fieldset][$key]);
+                        $validationGroup[$fieldset][$field] = $key;
+                    }
+                }
+
+                $validationGroup[$fieldset] = array_intersect_key($fields, $values[$fieldset]);
+
+                foreach ($validationGroup[$fieldset] as $field => $elements) {
+                    if (is_int($elements)) {
+                        unset($validationGroup[$fieldset][$field]);
+                        $validationGroup[$fieldset][$elements] = $field;
+                    }
+                }
+            }
+            $form->setValidationGroup($validationGroup);
         }
-        $form->setValidationGroup($validationGroup);
 
         $result = $this->hydrate($entity, $values, $form);
 

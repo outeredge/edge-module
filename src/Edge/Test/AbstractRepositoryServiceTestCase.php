@@ -62,7 +62,7 @@ abstract class AbstractRepositoryServiceTestCase extends AbstractTestCase
     {
         if (!$result instanceof $entityClass) {
             throw new PHPUnit_Framework_ExpectationFailedException(sprintf(
-                'Failed asserting that a "%s" entity was updatet: ' . "\n%s",
+                'Failed asserting that a "%s" entity was updated: ' . "\n%s",
                 $entityClass,
                 print_r($this->getService()->getErrorMessages(), true)
             ));
