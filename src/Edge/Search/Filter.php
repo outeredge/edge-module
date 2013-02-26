@@ -55,25 +55,7 @@ class Filter
         preg_match_all(self::QUERY_REGEX, $query, $params);
         foreach ($params[1] as $key => $field) {
             $value = $this->processValue($params[3][$key]);
-
-            if (isset($this->validSearchFields[$field])) {
-                $this->setFieldValue($field, $value, $params[2][$key]);
-                continue;
-            }
-
-            if ($field == self::PARAM_SORT) {
-                if (isset($this->validSearchFields[$value])) {
-                    $this->sort = $value;
-                }
-                continue;
-            }
-
-            if ($field == self::PARAM_ORDER) {
-                if ($value != self::ORDER_DESC) {
-                    $this->order = self::ORDER_ASC;
-                }
-                continue;
-            }
+            $this->setFieldValue($field, $value, $params[2][$key]);
         }
     }
 
@@ -105,9 +87,23 @@ class Filter
                 'value'      => $value,
                 'comparison' => $comparison,
             );
-        } else {
-            throw new \Exception("Invalid field [$field] specified");
+            return $this;
         }
+
+        if ($field == self::PARAM_SORT) {
+            if (isset($this->validSearchFields[$value])) {
+                $this->sort = $value;
+            }
+            return $this;
+        }
+
+        if ($field == self::PARAM_ORDER) {
+            if ($value != self::ORDER_DESC) {
+                $this->order = self::ORDER_ASC;
+            }
+            return $this;
+        }
+
         return $this;
     }
 
