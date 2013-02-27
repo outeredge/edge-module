@@ -6,7 +6,6 @@ use Edge\Entity\AbstractEntity;
 use Edge\Entity\Repository\RepositoryInterface;
 use Edge\Doctrine\Search\Filter;
 use Doctrine\ORM\EntityRepository;
-use Doctrine\ORM\QueryBuilder;
 use Zend\EventManager\EventManager;
 use Zend\EventManager\EventManagerAwareInterface;
 use Zend\EventManager\EventManagerInterface;

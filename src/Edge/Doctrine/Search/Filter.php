@@ -12,6 +12,8 @@ class Filter extends BaseFilter
 
     protected $keywordSearchFields = array();
 
+    protected $joins = array();
+
     /**
      * Apply filtered values to a QueryBuilder
      *
@@ -21,7 +23,6 @@ class Filter extends BaseFilter
     public function populateQueryBuilder(QueryBuilder $qb)
     {
         $orXs  = array();
-        $joins = array();
         $i = 0;
 
         foreach ($this->getAllFieldValues() as $field => $data) {
@@ -32,20 +33,7 @@ class Filter extends BaseFilter
                 $orXs[$field] = $qb->expr()->orX();
             }
 
-            if (substr_count($field, '.')) {
-                $joinName = strstr($field, '.', true);
-                if (!isset($joins[$joinName]) && isset($this->joinTableAliases[$joinName])) {
-                    if (is_array($this->joinTableAliases[$joinName])) {
-                        $qb->join(
-                            $qb->getRootAlias() . '.' . $this->joinTableAliases[$joinName]['property'],
-                            $this->joinTableAliases[$joinName]['alias']
-                        );
-                    } else {
-                        $qb->join($qb->getRootAlias() . '.' . $joinName, $this->joinTableAliases[$joinName]);
-                    }
-                    $joins[$joinName] = true;
-                }
-            }
+            $this->addJoin($field, $qb);
 
             if ($data['comparison'] == self::COMPARISON_EQUALS) {
                 $expr = $this->getEqualsExpr($this->validSearchFields[$field], $data['value'], $paramName, $qb->expr());
@@ -71,8 +59,9 @@ class Filter extends BaseFilter
 
         if (null !== $this->getKeywords() && !empty($this->keywordSearchFields)) {
             $orX = $qb->expr()->orX();
-            foreach ($this->keywordSearchFields as $kfield) {
-                $orX->add($qb->expr()->like($kfield,  ':keyword'));
+            foreach ($this->keywordSearchFields as $name => $field) {
+                $this->addJoin($name, $qb);
+                $orX->add($qb->expr()->like($field,  ':keyword'));
             }
             $qb->andWhere($orX);
             $qb->setParameter('keyword', '%'.$this->getKeywords().'%');
@@ -82,6 +71,38 @@ class Filter extends BaseFilter
             $qb->orderBy($this->validSearchFields[$this->getSortField()], $this->getSortOrder());
         }
 
+        return $qb;
+    }
+
+    /**
+     * Selectively add a join onto a qb instance using the aliases specified
+     *
+     * @param string $field
+     * @param \Doctrine\ORM\QueryBuilder $qb
+     * @return \Doctrine\ORM\QueryBuilder
+     */
+    protected function addJoin($field, QueryBuilder $qb)
+    {
+        if (!substr_count($field, '.')) {
+            return $qb;
+        }
+
+        $joinName = strstr($field, '.', true);
+
+        if (isset($this->joins[$joinName]) || !isset($this->joinTableAliases[$joinName])) {
+            return $qb;
+        }
+
+        if (is_array($this->joinTableAliases[$joinName])) {
+            $qb->join(
+                $qb->getRootAlias() . '.' . $this->joinTableAliases[$joinName]['property'],
+                $this->joinTableAliases[$joinName]['alias']
+            );
+        } else {
+            $qb->join($qb->getRootAlias() . '.' . $joinName, $this->joinTableAliases[$joinName]);
+        }
+
+        $this->joins[$joinName] = true;
         return $qb;
     }
 
