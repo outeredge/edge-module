@@ -94,12 +94,12 @@ class Filter extends BaseFilter
         }
 
         if (is_array($this->joinTableAliases[$joinName])) {
-            $qb->join(
+            $qb->leftJoin(
                 $qb->getRootAlias() . '.' . $this->joinTableAliases[$joinName]['property'],
                 $this->joinTableAliases[$joinName]['alias']
             );
         } else {
-            $qb->join($qb->getRootAlias() . '.' . $joinName, $this->joinTableAliases[$joinName]);
+            $qb->leftJoin($qb->getRootAlias() . '.' . $joinName, $this->joinTableAliases[$joinName]);
         }
 
         $this->joins[$joinName] = true;

@@ -42,7 +42,7 @@ class Authentication extends AbstractPlugin {
      */
     public function getAuthAdapter() {
         if (null === $this->authAdapter && !$this->authAdapter = $this->getAuthService()->getAdapter()) {
-            throw new \Exception('No authentication adapter was provided');
+            throw new \Exception('No authentication adapter available');
         }
 
         return $this->authAdapter;
