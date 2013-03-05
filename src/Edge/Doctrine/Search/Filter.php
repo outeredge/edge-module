@@ -68,6 +68,7 @@ class Filter extends BaseFilter
         }
 
         if (null !== $this->getSortField()) {
+            $this->addJoin($this->getSortField(), $qb);
             $qb->orderBy($this->validSearchFields[$this->getSortField()], $this->getSortOrder());
         }
 
