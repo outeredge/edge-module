@@ -103,8 +103,12 @@ abstract class AbstractDoctrineRepository extends EntityRepository implements Re
      */
     public function createFilteredQueryBuilder($query, $alias)
     {
-        $qb = $this->createQueryBuilder($alias);
-        return $this->getFilter()->setQueryString($query)->populateQueryBuilder($qb);
+        $qb     = $this->createQueryBuilder($alias);
+        $filter = $this->getFilter();
+        $filter->setMetaData($this->getClassMetadata())
+               ->setQueryString($query);
+
+        return $filter->populateQueryBuilder($qb);
     }
 
     /**

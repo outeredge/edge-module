@@ -2,8 +2,10 @@
 
 namespace Edge\Doctrine\Search;
 
+use DateTime;
 use Doctrine\ORM\Query\Expr;
 use Doctrine\ORM\QueryBuilder;
+use Doctrine\Common\Persistence\Mapping\ClassMetadata;
 use Edge\Search\Filter as BaseFilter;
 
 class Filter extends BaseFilter
@@ -14,6 +16,8 @@ class Filter extends BaseFilter
 
     protected $joins = array();
 
+    protected $metadata = null;
+
     /**
      * Apply filtered values to a QueryBuilder
      *
@@ -22,37 +26,63 @@ class Filter extends BaseFilter
      */
     public function populateQueryBuilder(QueryBuilder $qb)
     {
-        $orXs  = array();
+        $andXs  = array();
         $i = 0;
 
-        foreach ($this->getAllFieldValues() as $field => $data) {
-            $i++;
-            $paramName = 'param'.$i;
-
-            if (!isset($orXs[$field])) {
-                $orXs[$field] = $qb->expr()->orX();
-            }
+        foreach ($this->getAllFieldValues() as $field => $values) {
 
             $this->addJoin($field, $qb);
 
-            if ($data['comparison'] == self::COMPARISON_EQUALS) {
-                $expr = $this->getEqualsExpr($this->validSearchFields[$field], $data['value'], $paramName, $qb->expr());
-            } elseif ($data['comparison'] == self::COMPARISON_LIKE) {
-                $data['value'] = '%'. $data['value'] .'%';
-                $expr = $this->getLikeExpr($this->validSearchFields[$field], $data['value'], $paramName, $qb->expr());
-            } else {
-                $expr = $this->getNotEqualsExpr($this->validSearchFields[$field], $data['value'], $paramName, $qb->expr());
-            }
+            foreach ($values as $data) {
+                $i++;
+                $paramName = ':param'.$i;
 
-            if (null !== $data['value']) {
-                $qb->setParameter($paramName, $data['value']);
-            }
+                switch ($data['comparison']) {
+                    case self::COMPARISON_EQUALS:
+                        $expr = $this->getEqualsExpr($this->validSearchFields[$field], $data['value'], $paramName, $qb->expr());
+                        break;
+                    case self::COMPARISON_LIKE:
+                        $data['value'] = '%'. $data['value'] .'%';
+                        $expr = $this->getLikeExpr($this->validSearchFields[$field], $data['value'], $paramName, $qb->expr());
+                        break;
+                    case self::COMPARISON_NOT_EQUALS:
+                        $expr = $this->getNotEqualsExpr($this->validSearchFields[$field], $data['value'], $paramName, $qb->expr());
+                        break;
+                    case self::COMPARISON_GREATER:
+                        $data['value']  = $this->handleTypeConversions($data['value'], $field);
+                        $expr = $this->getGreaterThanExpr($this->validSearchFields[$field], $paramName, $qb->expr());
+                        break;
+                    case self::COMPARISON_GREATER_OR_EQ:
+                        $data['value']  = $this->handleTypeConversions($data['value'], $field);
+                        $expr = $this->getGreaterThanOrEqualToExpr($this->validSearchFields[$field], $paramName, $qb->expr());
+                        break;
+                    case self::COMPARISON_LESS:
+                        $data['value']  = $this->handleTypeConversions($data['value'], $field);
+                        $expr = $this->getLessThanExpr($this->validSearchFields[$field], $paramName, $qb->expr());
+                        break;
+                    case self::COMPARISON_LESS_OR_EQ:
+                        $data['value']  = $this->handleTypeConversions($data['value'], $field);
+                        $expr = $this->getLassThanOrEqualToExpr($this->validSearchFields[$field], $paramName, $qb->expr());
+                        break;
+                    default:
+                        continue;
+                        break;
+                }
 
-            $orXs[$field]->add($expr);
+                if (null !== $data['value']) {
+                    $qb->setParameter(trim($paramName, ':'), $data['value']);
+                }
+
+                if (!isset($andXs[$field])) {
+                    $andXs[$field] = $qb->expr()->andX();
+                }
+
+                $andXs[$field]->add($expr);
+            }
         }
 
-        if (count($orXs)) {
-            foreach ($orXs as $where) {
+        if (count($andXs)) {
+            foreach ($andXs as $where) {
                 $qb->andWhere($where);
             }
         }
@@ -108,6 +138,27 @@ class Filter extends BaseFilter
     }
 
     /**
+     * Handle conversions of strings to relevant field types
+     *
+     * @param  string  $value
+     * @param  string  $field
+     * @return mixed
+     */
+    protected function handleTypeConversions($value, $field)
+    {
+        switch($this->getMetaData()->getTypeOfField($field)) {
+            case 'datetime':
+            case 'date':
+                $value = new DateTime($value);
+                break;
+            default:
+                break;
+        }
+
+        return $value;
+    }
+
+    /**
      * Get a like expression for specified field and data
      *
      * @param string  $field field name on entity
@@ -121,7 +172,7 @@ class Filter extends BaseFilter
             return $this->getEqualsExpr($field, $value, $paramName, $expr);
         }
 
-        return $expr->like($field, ':'.$paramName);
+        return $expr->like($field, $paramName);
     }
 
     /**
@@ -135,20 +186,20 @@ class Filter extends BaseFilter
     protected function getEqualsExpr($field, $value, $paramName, Expr $expr)
     {
         if (null === $value) {
-            return $field . ' IS NULL';
+            return $expr->isNull($field);
         }
 
         if (is_array($value)) {
             if (in_array(null, $value)) {
                 return $expr()->orX(
-                    $field . ' IS NULL',
-                    $expr->in($field, ':'.$paramName)
+                    $expr->isNull($field),
+                    $expr->in($field, $paramName)
                 );
             }
-            return $expr->in($field, ':'.$paramName);
+            return $expr->in($field, $paramName);
         }
 
-        return $expr->eq($field, ':'.$paramName);
+        return $expr->eq($field, $paramName);
     }
 
     /**
@@ -162,29 +213,69 @@ class Filter extends BaseFilter
     protected function getNotEqualsExpr($field, $value, $paramName, Expr $expr)
     {
         if (null === $value) {
-            return 'NOT '. $field . ' IS NULL';
+            return $expr->isNotNull($field);
         }
 
         if (is_array($value)) {
             if (in_array(null, $value)) {
                 return $expr()->orX(
-                    'NOT '. $field . ' IS NULL',
-                    $expr->notIn($field, ':'.$paramName)
+                    $expr->isNotNull($field),
+                    $expr->notIn($field, $paramName)
                 );
             }
-            return $expr->notIn($field, ':'.$paramName);
+            return $expr->notIn($field, $paramName);
         }
 
-        return $expr->neq($field, ':'.$paramName);
+        return $expr->neq($field, $paramName);
+    }
+
+    protected function getGreaterThanExpr($field, $paramName, Expr $expr)
+    {
+        return $expr->gt($field, $paramName);
+    }
+
+    protected function getGreaterThanOrEqualToExpr($field, $paramName, Expr $expr)
+    {
+        return $expr->gte($field, $paramName);
+    }
+
+    protected function getLessThanExpr($field, $paramName, Expr $expr)
+    {
+        return $expr->lt($field, $paramName);
+    }
+
+    protected function getLassThanOrEqualToExpr($field, $paramName, Expr $expr)
+    {
+        return $expr->lte($field, $paramName);
     }
 
     public function setKeywordSearchFields(array $fields)
     {
         $this->keywordSearchFields = $fields;
+        return $this;
     }
 
     public function setJoinTableAliases(array $tables)
     {
         $this->joinTableAliases = $tables;
+        return $this;
+    }
+
+    /**
+     * @param \Doctrine\Common\Persistence\Mapping\ClassMetadata $metadata
+     * @return Filter
+     */
+    public function setMetaData(ClassMetadata $metadata)
+    {
+        $this->metadata = $metadata;
+        return $this;
+    }
+
+    /**
+     * @return ClassMetadata
+     */
+    public function getMetaData()
+    {
+        return $this->metadata;
     }
 }

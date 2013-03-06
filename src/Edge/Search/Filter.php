@@ -17,11 +17,15 @@ class Filter
     const ORDER_DESC = 'desc';
     const ORDER_ASC  = 'asc';
 
-    const COMPARISON_EQUALS     = ':';
-    const COMPARISON_NOT_EQUALS = '!';
-    const COMPARISON_LIKE       = '~';
+    const COMPARISON_EQUALS         = ':';
+    const COMPARISON_NOT_EQUALS     = '!';
+    const COMPARISON_LIKE           = '~';
+    const COMPARISON_GREATER        = '>';
+    const COMPARISON_LESS           = '<';
+    const COMPARISON_GREATER_OR_EQ  = '>=';
+    const COMPARISON_LESS_OR_EQ     = '<=';
 
-    const QUERY_REGEX = '/([a-zA-Z-\.]+)(:|!|~)((?:\([^)]+?\)|[^( ]+))/';
+    const QUERY_REGEX = '/([a-zA-Z-\.]+)(:|!|~|>=|>|<=|<)((?:\([^)]+?\)|[^( ]+))/';
 
     /**
      * Allowed search fields
@@ -29,6 +33,11 @@ class Filter
      */
     protected $validSearchFields = array();
 
+    /**
+     * Values and their replacements
+     *
+     * @var array
+     */
     protected $replaceValues = array();
 
     protected $data = array();
@@ -55,7 +64,7 @@ class Filter
         preg_match_all(self::QUERY_REGEX, $query, $params);
         foreach ($params[1] as $key => $field) {
             $value = $this->processValue($params[3][$key]);
-            $this->setFieldValue($field, $value, $params[2][$key]);
+            $this->addFieldValue($field, $value, $params[2][$key]);
         }
     }
 
@@ -79,12 +88,11 @@ class Filter
         return $value;
     }
 
-    public function setFieldValue($field, $value, $comparison = self::COMPARISON_EQUALS)
+    public function addFieldValue($field, $value, $comparison = self::COMPARISON_EQUALS)
     {
         if (isset($this->validSearchFields[$field])) {
-            $value = $this->replaceValue($field, $value);
-            $this->data[$field] = array(
-                'value'      => $value,
+            $this->data[$field][] = array(
+                'value'      => $this->replaceValue($field, $value),
                 'comparison' => $comparison,
             );
             return $this;
@@ -107,7 +115,7 @@ class Filter
         return $this;
     }
 
-    public function getFieldValue($field)
+    public function getFieldValues($field)
     {
         if (isset($this->data[$field])) {
             return $this->data[$field];
@@ -139,8 +147,10 @@ class Filter
             return $this->getKeywords();
         }
 
-        foreach ($this->data as $field => $value) {
-            $filterStr.= $field . $value['comparison'] . $value['value'] . ' ';
+        foreach ($this->data as $field => $values) {
+            foreach ($values as $value) {
+                $filterStr.= $field . $value['comparison'] . $value['value'] . ' ';
+            }
         }
 
         if (null !== $this->sort) {
@@ -212,7 +222,7 @@ class Filter
                 $value = $value['value'];
                 $comparison = isset($value['comparison']) ? $value['comparison'] : $comparison;
             }
-            $this->setFieldValue($field, $value, $comparison);
+            $this->addFieldValue($field, $value, $comparison);
         }
 
         return $this;
