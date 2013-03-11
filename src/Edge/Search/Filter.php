@@ -88,12 +88,31 @@ class Filter
         return $value;
     }
 
-    public function addFieldValue($field, $value, $comparison = self::COMPARISON_EQUALS)
+    /**
+     * Add a value to the filter
+     *
+     * @param string $field
+     * @param string $value
+     * @param string $comparison see class consts
+     * @param boolean $default whether the value should be considered a default
+     * @return \Edge\Search\Filter
+     */
+    public function addFieldValue($field, $value, $comparison = self::COMPARISON_EQUALS, $default = false)
     {
         if (isset($this->validSearchFields[$field])) {
+
+            if (isset($this->data[$field])) {
+                foreach ($this->data[$field] as $key => $values) {
+                    if ($values['default']) {
+                        unset($this->data[$field][$key]);
+                    }
+                }
+            }
+
             $this->data[$field][] = array(
                 'value'      => $this->replaceValue($field, $value),
                 'comparison' => $comparison,
+                'default'    => $default,
             );
             return $this;
         }
@@ -222,7 +241,7 @@ class Filter
                 $value = $value['value'];
                 $comparison = isset($value['comparison']) ? $value['comparison'] : $comparison;
             }
-            $this->addFieldValue($field, $value, $comparison);
+            $this->addFieldValue($field, $value, $comparison, true);
         }
 
         return $this;

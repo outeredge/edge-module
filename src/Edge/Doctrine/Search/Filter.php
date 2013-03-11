@@ -191,7 +191,7 @@ class Filter extends BaseFilter
 
         if (is_array($value)) {
             if (in_array(null, $value)) {
-                return $expr()->orX(
+                return $expr->orX(
                     $expr->isNull($field),
                     $expr->in($field, $paramName)
                 );
