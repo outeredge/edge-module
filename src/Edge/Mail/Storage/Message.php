@@ -2,6 +2,10 @@
 
 namespace Edge\Mail\Storage;
 
+use dflydev\markdown\MarkdownExtraParser;
+use Edge\Mail\Exception;
+use Zend\Mime\Part as MimePart;
+use Zend\Mime\Message as MimeMessage;
 use Zend\Mail\Storage\Message as StorageMessage;
 use Zend\Mail\Storage\Part;
 use Zend\Filter\StripTags;
@@ -65,6 +69,38 @@ class Message extends StorageMessage {
 
             $this->body .= $this->decodeContent($part->getContent(), $encoding);
         }
+    }
+
+    /**
+     * Creates a multi-part message body with plain text and HTML (from Markdown)
+     *
+     * @param string $text
+     * @return \Zend\Mime\Message
+     */
+    public function createMultiPartBody($text)
+    {
+        if (!class_exists('MarkdownExtraParser')) {
+            throw new Exception\RuntimeException('MarkdownExtraParser library was not available');
+        }
+
+        $plain = new MimePart($text);
+        $plain->type = "text/plain";
+
+        $markdownParser = new MarkdownExtraParser();
+        $html = new MimePart($markdownParser->transformMarkdown($text));
+        $html->type = "text/html";
+
+        $alternatives = new MimeMessage();
+        $alternatives->setParts(array($plain, $html));
+        $alternatives->type = "multipart/alternative";
+
+        $part = new MimePart($alternatives->generateMessage());
+        $part->type = "multipart/alternative;\n boundary=\"".$alternatives->getMime()->boundary()."\"";
+
+        $body = new MimeMessage();
+        $body->addPart($part);
+
+        return $body;
     }
 
     protected function decodeContent($content, $transferEncoding = null, $stripTags = true)
