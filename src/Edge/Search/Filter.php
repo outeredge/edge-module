@@ -127,6 +127,8 @@ class Filter
         if ($field == self::PARAM_ORDER) {
             if ($value != self::ORDER_DESC) {
                 $this->order = self::ORDER_ASC;
+            } else {
+                $this->order = self::ORDER_DESC;
             }
             return $this;
         }
