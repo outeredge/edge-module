@@ -95,7 +95,8 @@ abstract class AbstractRepositoryService extends AbstractBaseService
     }
 
     /**
-     * Update entity from array via form
+     * Update entity from array via form,
+     * note that related entities cannot be updated in this manner
      *
      * @param AbstractEntity $entity
      * @param array $values
@@ -108,25 +109,38 @@ abstract class AbstractRepositoryService extends AbstractBaseService
             $form = $this->getEditForm();
         }
 
-        $validationGroup = $form->getValidationGroup();
-        if ($validationGroup !== null) {
-            foreach ($validationGroup as $fieldset => &$fields) {
-                foreach ($fields as $key => $field) {
-                    if (is_int($key)) {
-                        unset($validationGroup[$fieldset][$key]);
-                        $validationGroup[$fieldset][$field] = $key;
+        if ($form->getValidationGroup()) {
+            $validationGroup = array();
+            $empty = true;
+
+            foreach ($form->getValidationGroup() as $fieldset => $fields) {
+                if (isset($values[$fieldset])) {
+                    foreach ($fields as $key => $field) {
+                        if (is_int($key)) {
+                            $validationGroup[$fieldset][$field] = $key;
+                        }
+                    }
+
+                    $validationGroup[$fieldset] = array_flip(array_intersect_key($validationGroup[$fieldset], $values[$fieldset]));
+
+                    // don't update data that has not changed
+                    foreach ($validationGroup[$fieldset] as $key => $field) {
+                        if ($entity[$field] && $entity[$field] === $values[$fieldset][$field]) {
+                            unset($validationGroup[$fieldset][$key]);
+                        }
                     }
                 }
 
-                $validationGroup[$fieldset] = array_intersect_key($fields, $values[$fieldset]);
-
-                foreach ($validationGroup[$fieldset] as $field => $elements) {
-                    if (is_int($elements)) {
-                        unset($validationGroup[$fieldset][$field]);
-                        $validationGroup[$fieldset][$elements] = $field;
-                    }
+                if (!empty($validationGroup[$fieldset])) {
+                    $empty = false;
                 }
             }
+
+            // nothing to be updated, return the entity as it was
+            if ($empty) {
+                return $entity;
+            }
+
             $form->setValidationGroup($validationGroup);
         }
 
