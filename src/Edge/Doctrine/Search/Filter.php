@@ -31,53 +31,53 @@ class Filter extends BaseFilter
 
         foreach ($this->getAllFieldValues() as $field => $values) {
 
+            if (!isset($andXs[$field])) {
+                $andXs[$field] = $qb->expr()->andX();
+            }
+
             $this->addJoin($field, $qb);
 
             foreach ($values as $data) {
                 $i++;
-                $paramName = ':param'.$i;
 
-                switch ($data['comparison']) {
-                    case self::COMPARISON_EQUALS:
-                        $expr = $this->getEqualsExpr($this->validSearchFields[$field], $data['value'], $paramName, $qb->expr());
-                        break;
-                    case self::COMPARISON_LIKE:
-                        $data['value'] = '%'. $data['value'] .'%';
-                        $expr = $this->getLikeExpr($this->validSearchFields[$field], $data['value'], $paramName, $qb->expr());
-                        break;
-                    case self::COMPARISON_NOT_EQUALS:
-                        $expr = $this->getNotEqualsExpr($this->validSearchFields[$field], $data['value'], $paramName, $qb->expr());
-                        break;
-                    case self::COMPARISON_GREATER:
-                        $data['value']  = $this->handleTypeConversions($data['value'], $field);
-                        $expr = $this->getGreaterThanExpr($this->validSearchFields[$field], $paramName, $qb->expr());
-                        break;
-                    case self::COMPARISON_GREATER_OR_EQ:
-                        $data['value']  = $this->handleTypeConversions($data['value'], $field);
-                        $expr = $this->getGreaterThanOrEqualToExpr($this->validSearchFields[$field], $paramName, $qb->expr());
-                        break;
-                    case self::COMPARISON_LESS:
-                        $data['value']  = $this->handleTypeConversions($data['value'], $field);
-                        $expr = $this->getLessThanExpr($this->validSearchFields[$field], $paramName, $qb->expr());
-                        break;
-                    case self::COMPARISON_LESS_OR_EQ:
-                        $data['value']  = $this->handleTypeConversions($data['value'], $field);
-                        $expr = $this->getLassThanOrEqualToExpr($this->validSearchFields[$field], $paramName, $qb->expr());
-                        break;
-                    default:
-                        continue;
-                        break;
-                }
+                $param = ':param' . $i;
+                $value = $this->handleTypeConversions($data['value'], $field);
+                $expr  = $qb->expr()->orX();
 
-                if (null !== $data['value']) {
-                    $qb->setParameter(trim($paramName, ':'), $data['value']);
-                }
-
-                if (!isset($andXs[$field])) {
-                    $andXs[$field] = $qb->expr()->andX();
+                foreach ((array) $this->validSearchFields[$field] as $searchField) {
+                    switch ($data['comparison']) {
+                        case self::COMPARISON_EQUALS:
+                            $expr->add($this->getEqualsExpr($searchField, $value, $param, $qb->expr()));
+                            break;
+                        case self::COMPARISON_LIKE:
+                            $expr->add($this->getLikeExpr($searchField, $value, $param, $qb->expr()));
+                            break;
+                        case self::COMPARISON_NOT_EQUALS:
+                            $expr->add($this->getNotEqualsExpr($searchField, $value, $param, $qb->expr()));
+                            break;
+                        case self::COMPARISON_GREATER:
+                            $expr->add($this->getGreaterThanExpr($searchField, $param, $qb->expr()));
+                            break;
+                        case self::COMPARISON_GREATER_OR_EQ:
+                            $expr->add($this->getGreaterThanOrEqualToExpr($searchField, $param, $qb->expr()));
+                            break;
+                        case self::COMPARISON_LESS:
+                            $expr->add($this->getLessThanExpr($searchField, $param, $qb->expr()));
+                            break;
+                        case self::COMPARISON_LESS_OR_EQ:
+                            $expr->add($this->getLassThanOrEqualToExpr($searchField, $param, $qb->expr()));
+                            break;
+                        default:
+                            continue;
+                            break;
+                    }
                 }
 
                 $andXs[$field]->add($expr);
+
+                if (null !== $value) {
+                    $qb->setParameter(trim($param, ':'), $value);
+                }
             }
         }
 
@@ -166,11 +166,13 @@ class Filter extends BaseFilter
      * @param string  $paramName parameter name to use
      * @param Expr    $expr
      */
-    protected function getLikeExpr($field, $value, $paramName, Expr $expr)
+    protected function getLikeExpr($field, &$value, $paramName, Expr $expr)
     {
         if (null === $value || is_array($value)) {
             return $this->getEqualsExpr($field, $value, $paramName, $expr);
         }
+
+        $value = '%' . $value . '%';
 
         return $expr->like($field, $paramName);
     }
