@@ -79,7 +79,7 @@ abstract class AbstractRestfulController extends ZendRestfulController
     }
 
     /**
-     * Bulk Process Data
+     * Bulk Process Data, handles POST, PUT & DELETE
      *
      * @param array  $data
      * @param string $entityName
@@ -96,28 +96,50 @@ abstract class AbstractRestfulController extends ZendRestfulController
             throw new Exception\InvalidArgumentException('Invalid data provided');
         }
 
+        $errors    = false;
         $responses = array();
 
         foreach ($data as $entityArray) {
             try {
-                if ($this->getRequest()->getMethod() == 'POST') {
-                    $result = $this->create(array($entityName => $entityArray));
-                } else {
-                    $id = isset($entityArray[$entityIdentifier]) ? $entityArray[$entityIdentifier] : null;
-                    $result = $this->update($id, array($entityName => $entityArray));
+                switch ($this->getRequest()->getMethod()) {
+                    case 'POST':
+                        $result = $this->create(array($entityName => $entityArray));
+                        break;
+                    case 'PUT':
+                        $id = isset($entityArray[$entityIdentifier]) ? $entityArray[$entityIdentifier] : null;
+                        $result = $this->update($id, array($entityName => $entityArray));
+                        break;
+                    case 'DELETE':
+                        $id = isset($entityArray[$entityIdentifier]) ? $entityArray[$entityIdentifier] : null;
+                        $result = $this->delete($id);
+                        break;
+                    default:
+                        throw new Exception\RuntimeException('Invalid HTTP method specificed for bulk action');
+                        break;
                 }
             } catch (ServiceException\ExceptionInterface $ex) {
                 $result = $this->handleServiceException($ex);
             }
 
-            if (!$result instanceof JsonModel) {
+            if (!$result instanceof JsonModel && !$result instanceof Response) {
                 throw new Exception\RuntimeException(sprintf(
-                    'Expected to receive a JsonModel, received %s',
+                    'Expected to receive a JsonModel or Response object, received %s',
                     is_object($result) ? get_class($result) : gettype($result)
                 ));
             }
 
-            $errors  = false;
+            if ($result instanceof Response) {
+                $responses[] = array(
+                    'code'    => $result->getStatusCode(),
+                    'headers' => $this->getResponse()->getHeaders()->toArray(),
+                    'body'    => null
+                );
+                if (!$result->isSuccess()) {
+                    $errors = true;
+                }
+                continue;
+            }
+
             $problem = $result->getVariable('api-problem');
 
             if ($problem instanceof ApiProblem) {
@@ -139,10 +161,16 @@ abstract class AbstractRestfulController extends ZendRestfulController
         if ($errors) {
             $this->getResponse()->setStatusCode(Response::STATUS_CODE_207);
         } else {
-            if ($this->getRequest()->getMethod() == 'POST') {
-                $this->getResponse()->setStatusCode(Response::STATUS_CODE_201);
-            } else {
-                $this->getResponse()->setStatusCode(Response::STATUS_CODE_200);
+            switch ($this->getRequest()->getMethod()) {
+                case 'POST':
+                    $this->getResponse()->setStatusCode(Response::STATUS_CODE_201);
+                    break;
+                case 'PUT':
+                    $this->getResponse()->setStatusCode(Response::STATUS_CODE_200);
+                    break;
+                case 'DELETE':
+                    $this->getResponse()->setStatusCode(Response::STATUS_CODE_204);
+                    break;
             }
         }
 
