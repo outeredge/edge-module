@@ -5,6 +5,8 @@ namespace Edge\Doctrine\Repository;
 use Edge\Entity\AbstractEntity;
 use Edge\Entity\Repository\RepositoryInterface;
 use Edge\Doctrine\Search\Filter;
+use Edge\Service\Exception\DeleteException;
+use Doctrine\DBAL\DBALException;
 use Doctrine\ORM\EntityRepository;
 use Zend\EventManager\EventManager;
 use Zend\EventManager\EventManagerAwareInterface;
@@ -153,14 +155,21 @@ abstract class AbstractDoctrineRepository extends EntityRepository implements Re
     }
 
     /**
-     * Delete an entity in the database (delayed)
+     * Delete an entity in the database
      *
      * @param AbstractEntity $entity
+     * @param boolean $immediate
      */
-    public function delete(AbstractEntity $entity, $immediate = false)
+    public function delete(AbstractEntity $entity, $immediate = true)
     {
         $this->getEntityManager()->remove($entity);
-        $this->flush($entity, $immediate);
+
+        try {
+            $this->flush(null, $immediate);
+        } catch (DBALException $ex) {
+            throw new DeleteException('Unable to delete entity', null, $ex);
+        }
+
         return $this;
     }
 

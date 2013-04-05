@@ -2,6 +2,7 @@
 
 namespace Edge\Doctrine\Listener;
 
+use Doctrine\ORM\ORMException;
 use Doctrine\DBAL\DBALException;
 use Doctrine\ORM\EntityManager;
 use Zend\EventManager\EventInterface;
@@ -42,16 +43,20 @@ class FlushEntities
             }
 
             $e->getApplication()->getServiceManager()->get('EntityManager')->flush();
-            self::$requiresFlush = false;
-        } catch (DBALException $ex) {
 
+            self::$requiresFlush = false;
+        } catch (\Exception $ex) {
             if (!$e instanceof MvcEvent) {
-                //@todo find a way to nicely throw this exception
-                die($ex);
+                if ($ex instanceof DBALException
+                    || $ex instanceof ORMException
+                ) {
+                    throw $ex;
+                }
             }
 
             $e->setError(self::ERROR_FLUSH)
               ->setParam('exception', $ex);
+
             $e->getApplication()->getEventManager()->trigger(MvcEvent::EVENT_DISPATCH_ERROR, $e);
         }
     }
