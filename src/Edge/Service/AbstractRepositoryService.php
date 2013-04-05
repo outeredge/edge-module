@@ -222,14 +222,10 @@ abstract class AbstractRepositoryService extends AbstractBaseService
     /**
      * Delete an entity
      *
-     * @param AbstractEntity|int $entity
+     * @param AbstractEntity $entity
      */
-    protected function delete($entity)
+    protected function delete(AbstractEntity $entity)
     {
-        if (!$entity instanceof AbstractEntity) {
-            $entity = $this->get($entity);
-        }
-
         $this->getRepository()->delete($entity);
         return $this;
     }

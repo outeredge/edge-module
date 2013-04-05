@@ -176,4 +176,19 @@ abstract class AbstractRestfulController extends ZendRestfulController
 
         return new JsonModel(array('responses' => $responses));
     }
+
+    /**
+     * Creates a "405 Method Not Allowed" response detailing the available options
+     *
+     * @param  array $options
+     * @return Response
+     */
+    protected function createMethodNotAllowedResponse(array $options)
+    {
+        $response = $this->getResponse();
+        $response->setStatusCode(Response::STATUS_CODE_405);
+        $headers = $response->getHeaders();
+        $headers->addHeaderLine('Allow', implode(', ', $options));
+        return $response;
+    }
 }
