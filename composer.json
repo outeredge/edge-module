@@ -15,7 +15,10 @@
     ],
     "require": {
         "php": ">=5.3.3",
-        "zendframework/zendframework": "2.*"
+        "zendframework/zendframework": ">=2.1"
+    },
+    "suggest": {
+        "phly/phly-restfully": "PhlyRestfully for Restful API features",
     },
     "autoload": {
         "psr-0": {

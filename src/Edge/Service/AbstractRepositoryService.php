@@ -64,6 +64,9 @@ abstract class AbstractRepositoryService extends AbstractBaseService
         return $this->form;
     }
 
+    /**
+     * @return Form
+     */
     public function getEditForm()
     {
         return $this->getForm();
