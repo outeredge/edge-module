@@ -18,7 +18,7 @@
         "zendframework/zendframework": ">=2.1"
     },
     "suggest": {
-        "phly/phly-restfully": "PhlyRestfully for Restful API features",
+        "phly/phly-restfully": "PhlyRestfully for Restful API features"
     },
     "autoload": {
         "psr-0": {
