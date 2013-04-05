@@ -4,11 +4,12 @@ namespace Edge\Rest\Mvc\Controller;
 
 use Edge\Exception;
 use Edge\Rest\ApiProblem;
+use Edge\Service\Exception as ServiceException;
 use Zend\Mvc\Controller\AbstractRestfulController as ZendRestfulController;
 use Zend\Mvc\MvcEvent;
 use Zend\Paginator\Paginator;
 use Zend\Stdlib\ArrayUtils;
-use Zend\Stdlib\ResponseInterface as Response;
+use Zend\Http\Response;
 use Zend\View\Model\JsonModel;
 
 abstract class AbstractRestfulController extends ZendRestfulController
@@ -19,16 +20,41 @@ abstract class AbstractRestfulController extends ZendRestfulController
         $return = $e->getParam('api-problem', false);
 
         if (!$return) {
-            $return = parent::onDispatch($e);
+            try {
+                $return = parent::onDispatch($e);
+            } catch (ServiceException\ExceptionInterface $ex) {
+                $return = $this->handleServiceException($ex);
+                $e->setResult($return);
+            }
         }
 
-        if (!$return instanceof ApiProblem) {
-            return $return;
+        return $return;
+    }
+
+    protected function handleServiceException(ServiceException\ExceptionInterface $ex)
+    {
+        if ($ex instanceof ServiceException\EntityErrorsException) {
+            $code   = $ex->getCode() ?: 500;
+            $return = $this->prepareProblemJsonModel(new ApiProblem($code, $ex->getMessage(), null, null, array('errors' => $ex->getErrors())));
+        } elseif ($ex instanceof ServiceException\EntityNotFoundException) {
+            $return = $this->prepareProblemJsonModel(new ApiProblem(404, 'Resource not found'));
+        } else {
+            throw $ex;
         }
 
-        $viewModel = new JsonModel(array('problem' => $return));
-        $e->setResult($viewModel);
-        return $viewModel;
+        return $return;
+    }
+
+    /**
+     * Create an api-problem JsonModel
+     *
+     * @param \Edge\Rest\ApiProblem $problem
+     * @return \Zend\View\Model\JsonModel
+     */
+    protected function prepareProblemJsonModel(ApiProblem $problem)
+    {
+        $jsonModel = new JsonModel(array('api-problem' => $problem));
+        return $jsonModel;
     }
 
     /**
@@ -73,11 +99,15 @@ abstract class AbstractRestfulController extends ZendRestfulController
         $responses = array();
 
         foreach ($data as $entityArray) {
-            if ($this->getRequest()->getMethod() == 'POST') {
-                $result = $this->create(array($entityName => $entityArray));
-            } else {
-                $id = isset($entityArray[$entityIdentifier]) ? $entityArray[$entityIdentifier] : null;
-                $result = $this->update($id, array($entityName => $entityArray));
+            try {
+                if ($this->getRequest()->getMethod() == 'POST') {
+                    $result = $this->create(array($entityName => $entityArray));
+                } else {
+                    $id = isset($entityArray[$entityIdentifier]) ? $entityArray[$entityIdentifier] : null;
+                    $result = $this->update($id, array($entityName => $entityArray));
+                }
+            } catch (ServiceException\ExceptionInterface $ex) {
+                $result = $this->handleServiceException($ex);
             }
 
             if (!$result instanceof JsonModel) {
@@ -87,14 +117,34 @@ abstract class AbstractRestfulController extends ZendRestfulController
                 ));
             }
 
-            $responses[] = array(
-                'code'    => $this->getResponse()->getStatusCode(),
-                'headers' => $this->getResponse()->getHeaders()->toArray(),
-                'body'    => $result->getVariables()
-            );
+            $errors  = false;
+            $problem = $result->getVariable('api-problem');
+
+            if ($problem instanceof ApiProblem) {
+                $responses[] = array(
+                    'code'    => $problem->httpStatus,
+                    'headers' => array('content-type' => 'application/api-problem+json'),
+                    'body'    => $problem->toArray()
+                );
+                $errors = true;
+            } else {
+                $responses[] = array(
+                    'code'    => $this->getResponse()->getStatusCode(),
+                    'headers' => $this->getResponse()->getHeaders()->toArray(),
+                    'body'    => $result->getVariables()
+                );
+            }
         }
 
-        $this->getResponse()->setStatusCode(Response::STATUS_CODE_207);
+        if ($errors) {
+            $this->getResponse()->setStatusCode(Response::STATUS_CODE_207);
+        } else {
+            if ($this->getRequest()->getMethod() == 'POST') {
+                $this->getResponse()->setStatusCode(Response::STATUS_CODE_201);
+            } else {
+                $this->getResponse()->setStatusCode(Response::STATUS_CODE_200);
+            }
+        }
 
         return new JsonModel(array('responses' => $responses));
     }

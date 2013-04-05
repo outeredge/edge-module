@@ -53,7 +53,7 @@ class RestfulJsonRenderer extends JsonRenderer
     /**
      * Render a view model
      *
-     * If the view model has a variable 'problem' that is an ApiProblem,
+     * If the view model has a variable 'api-problem' that is an ApiProblem,
      * return a customised representation.
      *
      * If not, it passes control to the parent.
@@ -68,7 +68,7 @@ class RestfulJsonRenderer extends JsonRenderer
             return parent::render($nameOrModel, $values);
         }
 
-        $problem = $nameOrModel->getVariable('problem');
+        $problem = $nameOrModel->getVariable('api-problem');
 
         if (!$problem instanceof ApiProblem) {
             return parent::render($nameOrModel, $values);

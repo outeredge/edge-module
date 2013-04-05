@@ -69,7 +69,7 @@ class ApiProblemListener implements ListenerAggregateInterface
 
         // Create a new model with the API-Problem,
         // reset the result and view model in the event
-        $model = new JsonModel(array('problem' => new ApiProblem($httpStatus, $exception)));
+        $model = new JsonModel(array('api-problem' => new ApiProblem($httpStatus, $exception)));
         $e->setResult($model);
         $e->setViewModel($model);
     }

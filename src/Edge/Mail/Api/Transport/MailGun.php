@@ -111,6 +111,10 @@ class MailGun implements TransportInterface
             'html'    => $message->getBodyHtml(),
         );
 
+        if (empty($data['text']) && empty($data['html'])) {
+            $data['text'] = ' ';
+        }
+
         foreach ($this->getOptions()->getAdditionalHeaders() as $name) {
             if ($message->hasHeader($name)) {
                 $data['h:'.$name] = $message->getHeader($name);

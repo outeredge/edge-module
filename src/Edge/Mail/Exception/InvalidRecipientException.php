@@ -2,6 +2,8 @@
 
 namespace Edge\Mail\Exception;
 
-class InvalidRecipientException extends \InvalidArgumentException
+use Edge\Exception\InvalidArgumentException;
+
+class InvalidRecipientException extends InvalidArgumentException
 {
 }

@@ -4,6 +4,7 @@ namespace Edge\Service;
 
 use Edge\Entity\Repository\RepositoryInterface;
 use Edge\Entity\AbstractEntity;
+use Edge\Exception\RuntimeException;
 use Zend\Form\Form;
 
 abstract class AbstractRepositoryService extends AbstractBaseService
@@ -35,7 +36,7 @@ abstract class AbstractRepositoryService extends AbstractBaseService
     public function getRepository()
     {
         if (null === $this->repository) {
-            throw new \RuntimeException('No repository is set on the service');
+            throw new RuntimeException('No repository is set on this service');
         }
         return $this->repository;
     }
@@ -58,9 +59,9 @@ abstract class AbstractRepositoryService extends AbstractBaseService
     public function getForm()
     {
         if (null === $this->form) {
-            throw new \RuntimeException('No form instance is available');
+            throw new RuntimeException('No form instance is available');
         }
-        $this->getEventManager()->trigger(__FUNCTION__, $this, array('form'=>$this->form));
+        $this->getEventManager()->trigger(__FUNCTION__, $this, array('form' => $this->form));
         return $this->form;
     }
 
@@ -70,6 +71,24 @@ abstract class AbstractRepositoryService extends AbstractBaseService
     public function getEditForm()
     {
         return $this->getForm();
+    }
+
+    /**
+     * Get a single entity by id using repositories find()
+     *
+     * @param  mixed $id
+     * @return AbstractEntity
+     * @throws Exception\EntityNotFoundException
+     */
+    protected function get($id)
+    {
+        $entity = $this->getRepository()->find($id);
+
+        if (null === $entity) {
+            throw new Exception\EntityNotFoundException;
+        }
+
+        return $entity;
     }
 
     /**
@@ -89,8 +108,10 @@ abstract class AbstractRepositoryService extends AbstractBaseService
         $result = $this->hydrate($entity, $values, $form);
 
         if (!$result instanceof AbstractEntity) {
-            return false;
+            throw new Exception\CreationException('Unable to create entity', 422, null, $this->getErrorMessages());
         }
+
+//        $n = new \Exception;
 
         $this->save($result, false);
 
@@ -149,10 +170,11 @@ abstract class AbstractRepositoryService extends AbstractBaseService
 
         $result = $this->hydrate($entity, $values, $form);
 
-        if ($result instanceof AbstractEntity) {
-            $this->getRepository()->update($result);
+        if (!$result instanceof AbstractEntity) {
+            throw new Exception\UpdateException('Unable to update entity', 422, null, $this->getErrorMessages());
         }
 
+        $this->getRepository()->update($result);
         return $result;
     }
 
@@ -189,8 +211,9 @@ abstract class AbstractRepositoryService extends AbstractBaseService
         }
 
         $result = $form->getData();
+
         if (!$result instanceof AbstractEntity) {
-            throw new \Exception('Unable to cast form to Entity');
+            throw new RuntimeException('Unable to retrieve entity from Form');
         }
 
         return $result;
@@ -199,10 +222,14 @@ abstract class AbstractRepositoryService extends AbstractBaseService
     /**
      * Delete an entity
      *
-     * @param AbstractEntity $entity
+     * @param AbstractEntity|int $entity
      */
-    protected function delete(AbstractEntity $entity)
+    protected function delete($entity)
     {
+        if (!$entity instanceof AbstractEntity) {
+            $entity = $this->get($entity);
+        }
+
         $this->getRepository()->delete($entity);
         return $this;
     }
