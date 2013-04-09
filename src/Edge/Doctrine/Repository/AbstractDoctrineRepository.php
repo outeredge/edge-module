@@ -134,11 +134,13 @@ abstract class AbstractDoctrineRepository extends EntityRepository implements Re
     /**
      * Store a new Entity in the database
      *
-     * @param AbstractEntity $entity
+     * @param AbstractEntity|null $entity [optional]
      */
-    public function save(AbstractEntity $entity, $immediate = true)
+    public function save(AbstractEntity $entity = null, $immediate = true)
     {
-        $this->getEntityManager()->persist($entity);
+        if (null !== $entity) {
+            $this->getEntityManager()->persist($entity);
+        }
         $this->flush($entity, $immediate);
         return $this;
     }

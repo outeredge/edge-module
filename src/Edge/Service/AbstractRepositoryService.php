@@ -181,10 +181,10 @@ abstract class AbstractRepositoryService extends AbstractBaseService
     /**
      * Save an entity back to the database
      *
-     * @param AbstractEntity $entity
+     * @param AbstractEntity|null $entity [optional]
      * @param bool $immediate or delay
      */
-    protected function save(AbstractEntity $entity, $immediate = true)
+    protected function save(AbstractEntity $entity = null, $immediate = true)
     {
         $this->getRepository()->save($entity, $immediate);
     }
