@@ -111,8 +111,6 @@ abstract class AbstractRepositoryService extends AbstractBaseService
             throw new Exception\CreationException('Unable to create entity', 422, null, $this->getErrorMessages());
         }
 
-//        $n = new \Exception;
-
         $this->save($result, false);
 
         return $result;
