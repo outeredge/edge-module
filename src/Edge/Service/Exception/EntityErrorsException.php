@@ -15,7 +15,7 @@ class EntityErrorsException extends DomainException implements ExceptionInterfac
      * {@inheritdoc}
      * @param array $errors [optional]
      */
-    public function __construct($message, $code = 0, Exception $previous = null, array $errors = null)
+    public function __construct($message = null, $code = null, Exception $previous = null, array $errors = null)
     {
         if ($errors) {
             $this->setErrors($errors);
