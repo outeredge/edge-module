@@ -3,8 +3,8 @@
 namespace Edge\Rest\Mvc\Controller;
 
 use Edge\Exception;
-use Edge\Rest\ApiProblem;
 use Edge\Service\Exception as ServiceException;
+use PhlyRestfully\ApiProblem;
 use Zend\Mvc\Controller\AbstractRestfulController as ZendRestfulController;
 use Zend\Mvc\MvcEvent;
 use Zend\Paginator\Paginator;
@@ -48,7 +48,7 @@ abstract class AbstractRestfulController extends ZendRestfulController
     /**
      * Create an api-problem JsonModel
      *
-     * @param \Edge\Rest\ApiProblem $problem
+     * @param \PhlyRestfully\ApiProblem $problem
      * @return \Zend\View\Model\JsonModel
      */
     protected function prepareProblemJsonModel(ApiProblem $problem)

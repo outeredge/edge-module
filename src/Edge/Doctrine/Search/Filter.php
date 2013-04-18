@@ -8,6 +8,9 @@ use Doctrine\ORM\QueryBuilder;
 use Doctrine\Common\Persistence\Mapping\ClassMetadata;
 use Edge\Search\Filter as BaseFilter;
 
+/**
+ * Extension for \Edge\Search\Filter that creates a QB instance based on the Filter
+ */
 class Filter extends BaseFilter
 {
     protected $joinTableAliases = array();

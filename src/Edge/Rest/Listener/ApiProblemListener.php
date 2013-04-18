@@ -2,7 +2,7 @@
 
 namespace Edge\Rest\Listener;
 
-use Edge\Rest\ApiProblem;
+use PhlyRestfully\ApiProblem;
 use Zend\EventManager\EventManagerInterface;
 use Zend\EventManager\ListenerAggregateInterface;
 use Zend\Mvc\MvcEvent;
