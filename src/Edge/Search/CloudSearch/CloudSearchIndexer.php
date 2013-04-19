@@ -11,8 +11,6 @@ class CloudSearchIndexer implements IndexerInterface
 {
     protected $documentEndpoint = 'doc-zebreco-jcegbhkc3znoi3wupvykolqy6i.eu-west-1.cloudsearch.amazonaws.com';
 
-    protected $searchEndpoint = 'search-zebreco-jcegbhkc3znoi3wupvykolqy6i.eu-west-1.cloudsearch.amazonaws.com';
-
     protected $apiversion = '2011-02-01';
 
     public function add(IndexableEntityInterface $entity)
@@ -81,15 +79,6 @@ class CloudSearchIndexer implements IndexerInterface
         return sprintf(
             'https://%s/%s/documents/batch',
             $this->documentEndpoint,
-            $this->apiversion
-        );
-    }
-
-    public function getSearchEndpoint()
-    {
-        return sprintf(
-            'https://%s/%s/search',
-            $this->searchEndpoint,
             $this->apiversion
         );
     }

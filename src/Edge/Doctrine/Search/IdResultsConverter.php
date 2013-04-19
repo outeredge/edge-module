@@ -21,7 +21,7 @@ class IdResultsConverter implements ConverterInterface
      * @param \Doctrine\ORM\QueryBuilder $qb
      * @param string $searchfield search field for IN query
      */
-    public function __construct(QueryBuilder $qb, $searchfield = 'id')
+    public function __construct(QueryBuilder $qb, $searchfield)
     {
         $this->qb = $qb;
         $this->searchfield = $searchfield;
@@ -34,6 +34,8 @@ class IdResultsConverter implements ConverterInterface
      */
     public function convert($data)
     {
-        die(print_r($data));
+        $qb = $this->qb;
+        $qb->andWhere($qb->expr()->in($this->searchfield, $data));
+        return $qb->getQuery()->getResult();
     }
 }

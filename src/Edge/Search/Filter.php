@@ -99,24 +99,6 @@ class Filter
      */
     public function addFieldValue($field, $value, $comparison = self::COMPARISON_EQUALS, $default = false)
     {
-        if (isset($this->validSearchFields[$field])) {
-
-            if (isset($this->data[$field])) {
-                foreach ($this->data[$field] as $key => $values) {
-                    if ($values['default']) {
-                        unset($this->data[$field][$key]);
-                    }
-                }
-            }
-
-            $this->data[$field][] = array(
-                'value'      => $this->replaceValue($field, $value),
-                'comparison' => $comparison,
-                'default'    => $default,
-            );
-            return $this;
-        }
-
         if ($field == self::PARAM_SORT) {
             if (isset($this->validSearchFields[$value])) {
                 $this->sort = $value;
@@ -131,6 +113,33 @@ class Filter
                 $this->order = self::ORDER_DESC;
             }
             return $this;
+        }
+
+        if (isset($this->validSearchFields[$field])) {
+            if (isset($this->data[$field])) {
+                foreach ($this->data[$field] as $key => $values) {
+                    if ($values['default']) {
+                        unset($this->data[$field][$key]);
+                    }
+                }
+            }
+
+            $this->data[$field][] = array(
+                'value'      => $this->replaceValue($field, $value),
+                'comparison' => $comparison,
+                'default'    => $default,
+                'field'      => $this->validSearchFields[$field]
+            );
+            return $this;
+        }
+
+        if ($default) {
+            $this->data[$field][] = array(
+                'value'      => $this->replaceValue($field, $value),
+                'comparison' => $comparison,
+                'default'    => $default,
+                'field'      => $field
+            );
         }
 
         return $this;
@@ -233,6 +242,14 @@ class Filter
     public function getValidSearchFields()
     {
         return $this->validSearchFields;
+    }
+
+    public function getSearchField($field)
+    {
+        if (!isset($this->validSearchFields[$field])) {
+            throw new \Exception("Invalid search field [$field] specified");
+        }
+        return $this->validSearchFields[$field];
     }
 
     public function setDefaultValues(array $values)

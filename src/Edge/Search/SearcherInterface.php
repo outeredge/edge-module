@@ -11,9 +11,11 @@ interface SearcherInterface
     public function __construct(Filter $filter, ConverterInterface $converter = null);
 
     /**
+     * @param $offset
+     * @param $itemCountPerPage
      * @return mixed
      */
-    public function getResults();
+    public function getResults($offset, $itemCountPerPage);
 
     /**
      * @return int

@@ -1,12 +1,12 @@
 <?php
 
-namespace Edge\Doctrine\Search\Indexer;
+namespace Edge\Doctrine\Search;
 
 use Doctrine\Common\EventSubscriber;
 use Doctrine\ORM\Events;
 use Doctrine\ORM\Event\LifecycleEventArgs;
-use Edge\Search\Indexer\IndexerInterface;
-use Edge\Search\Indexer\IndexableEntityInterface;
+use Edge\Search\IndexerInterface;
+use Edge\Search\IndexableEntityInterface;
 
 class IndexerSubscriber implements EventSubscriber
 {
