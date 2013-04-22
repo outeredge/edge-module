@@ -9,6 +9,9 @@ use Zend\Http;
 
 class CloudSearchIndexer implements IndexerInterface
 {
+    const METHOD_ADD    = 'add';
+    const METHOD_DELETE = 'delete';
+
     protected $documentEndpoint = 'doc-zebreco-jcegbhkc3znoi3wupvykolqy6i.eu-west-1.cloudsearch.amazonaws.com';
 
     protected $apiversion = '2011-02-01';
@@ -67,11 +70,11 @@ class CloudSearchIndexer implements IndexerInterface
         $response = $client->send();
 
         if (!$response->isSuccess()) {
-            $entity->setIndexed(false);
+            $entity->setUnindexed(true);
             return;
         }
 
-        $entity->setIndexed(true);
+        $entity->setUnindexed(false);
     }
 
     protected function getDocumentEndpoint()

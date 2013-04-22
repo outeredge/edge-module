@@ -48,9 +48,6 @@ class CloudSearchSearcher implements SearcherInterface
      */
     public function getCount()
     {
-//        if (null == $this->count) {
-//
-//        }
         return $this->count;
     }
 
@@ -89,6 +86,7 @@ class CloudSearchSearcher implements SearcherInterface
 
         if (null !== $this->converter) {
             $results = $this->converter->convert($results);
+            $this->count = count($results);
         }
 
         return $results;
@@ -97,9 +95,9 @@ class CloudSearchSearcher implements SearcherInterface
     /**
      * Create a urlencoded search string from a Filter
      *
-     * @param \Edge\Search\Filter $filter
-     * @param $offset
-     * @param $itemCountPerPage
+     * @param  \Edge\Search\Filter $filter
+     * @param  $offset
+     * @param  $itemCountPerPage
      * @return string
      */
     public function createSearchQuery(Filter $filter, $offset = 0, $itemCountPerPage = 10)
@@ -110,7 +108,6 @@ class CloudSearchSearcher implements SearcherInterface
                     switch ($data['comparison']) {
                         case Filter::COMPARISON_EQUALS:
                         case Filter::COMPARISON_LIKE:
-                            // index config defines whether a field is a like or exact match
                             $params[] = $this->getEqualsExpr($data['field'], $data['value']);
                             break;
                         case Filter::COMPARISON_NOT_EQUALS:

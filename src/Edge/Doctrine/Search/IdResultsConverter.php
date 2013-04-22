@@ -19,12 +19,18 @@ class IdResultsConverter implements ConverterInterface
 
     /**
      * @param \Doctrine\ORM\QueryBuilder $qb
-     * @param string $searchfield search field for IN query
+     * @param string $searchfield search field for IN query [optional]
      */
-    public function __construct(QueryBuilder $qb, $searchfield)
+    public function __construct(QueryBuilder $qb, $searchfield = null)
     {
         $this->qb = $qb;
-        $this->searchfield = $searchfield;
+
+        if (null !== $searchfield) {
+            $this->searchfield = $searchfield;
+        } else {
+            $aliases = $qb->getRootAliases();
+            $this->searchfield = reset($aliases) . '.id';
+        }
     }
 
     /**
@@ -34,8 +40,13 @@ class IdResultsConverter implements ConverterInterface
      */
     public function convert($data)
     {
+        if (empty($data)) {
+            return $data;
+        }
+
         $qb = $this->qb;
         $qb->andWhere($qb->expr()->in($this->searchfield, $data));
+
         return $qb->getQuery()->getResult();
     }
 }

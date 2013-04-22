@@ -67,10 +67,24 @@ class ApiProblemListener implements ListenerAggregateInterface
             return;
         }
 
+        $headers = $e->getRequest()->getHeaders();
+        if (!$headers->has('accept')) {
+            return;
+        }
+
+        $accept  = $headers->get('Accept');
+        if (($match = $accept->match('application/json')) == false) {
+            return;
+        }
+
+        if ($match->getTypeString() != 'application/json') {
+            return;
+        }
+
         // Create a new model with the API-Problem,
         // reset the result and view model in the event
-        $model = new JsonModel(array('api-problem' => new ApiProblem($httpStatus, $exception)));
-        $e->setResult($model);
-        $e->setViewModel($model);
+        $jsonModel = new JsonModel(array('api-problem' => new ApiProblem($httpStatus, $exception)));
+        $e->setResult($jsonModel);
+        $e->setViewModel($jsonModel);
     }
 }

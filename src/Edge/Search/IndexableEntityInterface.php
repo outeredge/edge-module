@@ -10,9 +10,16 @@ interface IndexableEntityInterface
     public function toSearchArray();
 
     /**
-     * Set whether the entity has been indexed
+     * Set whether the entity needs to be indexed (true)
      *
      * @param boolean $indexed
      */
-    public function setIndexed($indexed = true);
+    public function setUnindexed($unindexed);
+
+    /**
+     * Should return true if the entity needs to be indexed
+     *
+     * @return boolean
+     */
+    public function getUnindexed();
 }

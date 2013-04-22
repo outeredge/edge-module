@@ -5,6 +5,7 @@ namespace Edge\Doctrine\Search;
 use Doctrine\Common\EventSubscriber;
 use Doctrine\ORM\Events;
 use Doctrine\ORM\Event\LifecycleEventArgs;
+use Edge\Search\Exception\IndexException;
 use Edge\Search\IndexerInterface;
 use Edge\Search\IndexableEntityInterface;
 
@@ -40,8 +41,15 @@ class IndexerSubscriber implements EventSubscriber
     {
         $entity = $args->getEntity();
         if ($entity instanceof IndexableEntityInterface) {
+            if ($entity->getUnindexed()) {
+                return;
+            }
+
             $this->indexer->delete($entity);
-            //@todo throw exception here if failure?
+
+            if ($entity->getUnindexed()) {
+                throw new IndexException('Unable to remove entity from CloudSearch');
+            }
         }
     }
 
