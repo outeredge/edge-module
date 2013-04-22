@@ -10,7 +10,7 @@ use Zend\Http;
 
 class CloudSearchSearcher implements SearcherInterface
 {
-    protected $searchEndpoint = 'search-zebreco-jcegbhkc3znoi3wupvykolqy6i.eu-west-1.cloudsearch.amazonaws.com';
+    protected $searchEndpoint;
 
     protected $apiversion = '2011-02-01';
 
@@ -32,14 +32,12 @@ class CloudSearchSearcher implements SearcherInterface
     protected $returnIdResults = true;
 
     /**
-     * @param \Edge\Search\Filter $filter
-     * @param \Edge\Search\ConverterInterface $converter
+     * @param string $endpoint your CloudSearch search endpoint
      * @param boolean $returnIdResults whether to return an array of ID's or all results
      */
-    public function __construct(Filter $filter, ConverterInterface $converter = null, $returnIdResults = true)
+    public function __construct($endpoint, $returnIdResults = true)
     {
-        $this->filter = $filter;
-        $this->converter = $converter;
+        $this->searchEndpoint  = $endpoint;
         $this->returnIdResults = $returnIdResults;
     }
 
@@ -84,8 +82,8 @@ class CloudSearchSearcher implements SearcherInterface
             $results = $this->extractResultsToIdArray($results);
         }
 
-        if (null !== $this->converter) {
-            $results = $this->converter->convert($results);
+        if (null !== $this->getConverter()) {
+            $results = $this->getConverter()->convert($results);
             $this->count = count($results);
         }
 
@@ -189,9 +187,29 @@ class CloudSearchSearcher implements SearcherInterface
         return $idResults;
     }
 
+    public function setFilter(Filter $filter)
+    {
+        $this->filter = $filter;
+        return $this;
+    }
+
     public function getFilter()
     {
+        if (null === $this->filter) {
+            throw new Exception\RuntimeException('No filter available!');
+        }
         return $this->filter;
+    }
+
+    public function setConverter(ConverterInterface $converter)
+    {
+        $this->converter = $converter;
+        return $this;
+    }
+
+    public function getConverter()
+    {
+        return $this->converter;
     }
 
     public function getSearchEndpoint()

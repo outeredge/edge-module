@@ -12,34 +12,55 @@ class CloudSearchIndexer implements IndexerInterface
     const METHOD_ADD    = 'add';
     const METHOD_DELETE = 'delete';
 
-    protected $documentEndpoint = 'doc-zebreco-jcegbhkc3znoi3wupvykolqy6i.eu-west-1.cloudsearch.amazonaws.com';
+    protected $documentEndpoint;
 
     protected $apiversion = '2011-02-01';
 
-    public function add(IndexableEntityInterface $entity)
+    public function __construct($endpoint)
     {
-        $this->index($entity, 'add');
+        $this->documentEndpoint = $endpoint;
     }
 
-    public function update(IndexableEntityInterface $entity)
+    public function add($entities)
     {
-        $this->index($entity, 'add');
+        return $this->updateIndex($entities, self::METHOD_ADD);
     }
 
-    public function delete(IndexableEntityInterface $entity)
+    public function update($entities)
     {
-        $this->index($entity, 'delete');
+        return $this->updateIndex($entities, self::METHOD_ADD);
     }
 
-    /**
-     * Store or update an entity in the search index
-     *
-     * @param IndexableEntityInterface $entity
-     * @param string $method add|delete
-     * @throws Exception\RuntimeException
-     * @throws Exception\IndexException
-     */
-    protected function index(IndexableEntityInterface $entity, $method = 'add')
+    public function delete($entities)
+    {
+        return $this->updateIndex($entities, self::METHOD_DELETE);
+    }
+
+    protected function updateIndex($entities, $method)
+    {
+        $data = array();
+
+        if (!is_array($entities)) {
+            $entities = array($entities);
+        }
+
+        foreach ($entities as $entity) {
+            if (!$entity instanceof IndexableEntityInterface) {
+                throw new Exception\RuntimeException('Invalid entity provided for indexing');
+            }
+            $data[] = $this->prepareIndexData($entity, $method);
+        }
+
+        $result = $this->index($data);
+
+        foreach ($entities as $entity) {
+            $entity->setUnindexed(!$result);
+        }
+
+        return $result;
+    }
+
+    protected function prepareIndexData(IndexableEntityInterface $entity, $method)
     {
         $fields = array_filter($entity->toSearchArray());
 
@@ -58,23 +79,43 @@ class CloudSearchIndexer implements IndexerInterface
             $data['fields'] = $fields;
         }
 
-        $adapter = new Http\Client\Adapter\Curl();
-        $client  = new Http\Client();
+        return $data;
+    }
 
+    /**
+     * Store or update an entity in the search index
+     *
+     * @param  array $data
+     * @throws Exception\RuntimeException
+     * @throws Exception\IndexException
+     * @return boolean true if successfull
+     */
+    protected function index(array $data)
+    {
+        $adapter = new Http\Client\Adapter\Curl();
+        $adapter->setOptions(array(
+            'curloptions' => array(
+                CURLOPT_SSL_VERIFYPEER => false,
+            )
+        ));
+
+        $client  = new Http\Client();
         $client->setAdapter($adapter);
         $client->setMethod('POST');
         $client->setUri($this->getDocumentEndpoint());
-        $client->setRawBody(json_encode(array($data)));
+        $client->setRawBody(json_encode($data));
         $client->setHeaders(array('Content-Type' => 'application/json'));
 
         $response = $client->send();
 
         if (!$response->isSuccess()) {
-            $entity->setUnindexed(true);
-            return;
+            return false;
         }
 
-        $entity->setUnindexed(false);
+        $results = json_decode($response->getContent(), true);
+        $count   = $results['adds'] + $results['deletes'];
+
+        return $count != count($data) ? 0 : $count;
     }
 
     protected function getDocumentEndpoint()

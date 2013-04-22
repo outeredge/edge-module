@@ -4,9 +4,27 @@ namespace Edge\Search;
 
 interface IndexerInterface
 {
-    public function add(IndexableEntityInterface $entity);
+    /**
+     * Add an entity or array of entities to the index,
+     * entities must be of type IndexableEntityInterface
+     *
+     * @param array|IndexableEntityInterface $entities
+     */
+    public function add($entities);
 
-    public function update(IndexableEntityInterface $entity);
+    /**
+     * Update an entity or array of entities in the index,
+     * entities must be of type IndexableEntityInterface
+     *
+     * @param array|IndexableEntityInterface $entities
+     */
+    public function update($entities);
 
-    public function delete(IndexableEntityInterface $entity);
+    /**
+     * Delete an entity or array of entities from the index,
+     * entities must be of type IndexableEntityInterface
+     *
+     * @param array|IndexableEntityInterface $entities
+     */
+    public function delete($entities);
 }
