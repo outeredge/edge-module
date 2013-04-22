@@ -5,12 +5,6 @@ namespace Edge\Search;
 interface SearcherInterface
 {
     /**
-     * @param \Edge\Search\Filter $filter
-     * @param \Edge\Search\ConverterInterface $converter
-     */
-    public function __construct(Filter $filter, ConverterInterface $converter = null);
-
-    /**
      * @param $offset
      * @param $itemCountPerPage
      * @return mixed
@@ -21,4 +15,12 @@ interface SearcherInterface
      * @return int
      */
     public function getCount();
+
+    public function setFilter(Filter $filter);
+
+    public function getFilter();
+
+    public function setConverter(ConverterInterface $converter);
+
+    public function getConverter();
 }
