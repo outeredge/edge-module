@@ -84,7 +84,6 @@ class CloudSearchSearcher implements SearcherInterface
 
         if (null !== $this->getConverter()) {
             $results = $this->getConverter()->convert($results);
-            $this->count = count($results);
         }
 
         return $results;

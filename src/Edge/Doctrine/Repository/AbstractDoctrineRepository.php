@@ -183,8 +183,9 @@ abstract class AbstractDoctrineRepository extends EntityRepository implements Re
      */
     protected function flush(AbstractEntity $entity = null, $immediate = false)
     {
-        $params = compact('entity', 'immediate');
-        $this->getEventManager()->trigger(__FUNCTION__, $this->getEntityManager(), $params);
+        if ($immediate) {
+            $this->getEventManager()->trigger(__FUNCTION__, $this->getEntityManager(), array('entity' => $entity));
+        }
         return $this;
     }
 }
