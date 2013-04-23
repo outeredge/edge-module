@@ -77,13 +77,13 @@ class CloudSearchIndexer implements IndexerInterface
     {
         $fields = array_filter($entity);
 
-        if (!isset($fields['id'])) {
-            throw new Exception\RuntimeException('Missing array key id is required');
+        if (!isset($fields['docid'])) {
+            throw new Exception\RuntimeException('Missing array key docid is required');
         }
 
         $data = array(
             'type'    => $method,
-            'id'      => $fields['id'],
+            'id'      => $fields['docid'],
             'version' => time(),
         );
 
