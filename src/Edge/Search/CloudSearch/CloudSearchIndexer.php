@@ -45,10 +45,13 @@ class CloudSearchIndexer implements IndexerInterface
         }
 
         foreach ($entities as $entity) {
-            if (!$entity instanceof IndexableEntityInterface) {
+            if ($entity instanceof IndexableEntityInterface) {
+                $data[] = $this->prepareIndexData($entity->toSearchArray(), $method);
+            } elseif (is_array($entity)) {
+                $data[] = $this->prepareIndexData($entity, $method);
+            } else {
                 throw new Exception\RuntimeException('Invalid entity provided for indexing');
             }
-            $data[] = $this->prepareIndexData($entity, $method);
         }
 
         $count = 0;
@@ -61,16 +64,18 @@ class CloudSearchIndexer implements IndexerInterface
             $count = $count + $result;
         }
 
-        foreach ($entities as $entity) {
-            $entity->setUnindexed(!$count);
+        if (reset($entities) instanceof IndexableEntityInterface) {
+            foreach ($entities as $entity) {
+                $entity->setUnindexed(!$count);
+            }
         }
 
         return $count;
     }
 
-    protected function prepareIndexData(IndexableEntityInterface $entity, $method)
+    protected function prepareIndexData(array $entity, $method)
     {
-        $fields = array_filter($entity->toSearchArray());
+        $fields = array_filter($entity);
 
         if (!isset($fields['id'])) {
             throw new Exception\RuntimeException('Missing array key id is required');
