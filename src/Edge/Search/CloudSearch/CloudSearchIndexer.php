@@ -51,13 +51,21 @@ class CloudSearchIndexer implements IndexerInterface
             $data[] = $this->prepareIndexData($entity, $method);
         }
 
-        $result = $this->index($data);
-
-        foreach ($entities as $entity) {
-            $entity->setUnindexed(!$result);
+        $count = 0;
+        foreach (array_chunk($data, 5000) as $chunk) {
+            $result = $this->index($chunk);
+            if (!$result) {
+                $count = 0;
+                break;
+            }
+            $count = $count + $result;
         }
 
-        return $result;
+        foreach ($entities as $entity) {
+            $entity->setUnindexed(!$count);
+        }
+
+        return $count;
     }
 
     protected function prepareIndexData(IndexableEntityInterface $entity, $method)
