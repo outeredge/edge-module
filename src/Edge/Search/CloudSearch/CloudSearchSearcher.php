@@ -100,28 +100,33 @@ class CloudSearchSearcher implements SearcherInterface
     public function createSearchQuery(Filter $filter, $offset = 0, $itemCountPerPage = 10)
     {
         $params = array();
-        foreach ($filter->getAllFieldValues() as $values) {
+        foreach ($filter->getAllFieldValues() as $field => $values) {
             foreach ($values as $data) {
-                    switch ($data['comparison']) {
-                        case Filter::COMPARISON_EQUALS:
-                        case Filter::COMPARISON_LIKE:
-                            $params[] = $this->getEqualsExpr($data['field'], $data['value']);
-                            break;
-                        case Filter::COMPARISON_NOT_EQUALS:
-                            $params[] = $this->getNotEqualsExpr($data['field'], $data['value']);
-                            break;
-    //                    case Filter::COMPARISON_GREATER:
-    //                        break;
-    //                    case Filter::COMPARISON_GREATER_OR_EQ:
-    //                        break;
-    //                    case Filter::COMPARISON_LESS:
-    //                        break;
-    //                    case Filter::COMPARISON_LESS_OR_EQ:
-    //                        break;
-                        default:
-                            continue;
-                            break;
-                    }
+                switch ($data['comparison']) {
+                    case Filter::COMPARISON_EQUALS:
+                    case Filter::COMPARISON_LIKE:
+                        $params[] = $this->getEqualsExpr($filter->getSearchField($field), $data['value']);
+                        break;
+                    case Filter::COMPARISON_NOT_EQUALS:
+                        $params[] = $this->getNotEqualsExpr($filter->getSearchField($field), $data['value']);
+                        break;
+                    case Filter::COMPARISON_GREATER:
+                        // @todo in here we could possibly add a not for the value and a greater than or equal to for the value also?
+                    case Filter::COMPARISON_GREATER_OR_EQ:
+                        if ($filter->isNumeric($field)) {
+                            $params[] = $this->getGreaterThanOrEqualToExpr($filter->getSearchField($field), $data['value']);
+                        }
+                        break;
+                    case Filter::COMPARISON_LESS:
+                    case Filter::COMPARISON_LESS_OR_EQ:
+                        if ($filter->isNumeric($field)) {
+                            $params[] = $this->getLessThanOrEqualToExpr($filter->getSearchField($field), $data['value']);
+                        }
+                        break;
+                    default:
+                        continue;
+                        break;
+                }
             }
         }
 
@@ -175,6 +180,30 @@ class CloudSearchSearcher implements SearcherInterface
             return sprintf("(or %s)", implode(' ', $expr));
         }
         return sprintf("(not %s:'%s')", $field, addslashes($value));
+    }
+
+    protected function getGreaterThanOrEqualToExpr($field, $value)
+    {
+        if (is_array($field)){
+            $expr = array();
+            foreach ($field as $fieldName) {
+                $expr[] = sprintf("%s:%s..", $fieldName, $value);
+            }
+            return sprintf("(or %s)", implode(' ', $expr));
+        }
+        return sprintf("%s:%s..", $field, $value);
+    }
+
+    protected function getLessThanOrEqualToExpr($field, $value)
+    {
+        if (is_array($field)){
+            $expr = array();
+            foreach ($field as $fieldName) {
+                $expr[] = sprintf("%s:..%s", $fieldName, $value);
+            }
+            return sprintf("(or %s)", implode(' ', $expr));
+        }
+        return sprintf("%s:..%s", $field, $value);
     }
 
     protected function extractResultsToIdArray(array $results)

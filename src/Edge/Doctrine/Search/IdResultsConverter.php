@@ -45,7 +45,7 @@ class IdResultsConverter implements ConverterInterface
         }
 
         $qb = $this->qb;
-        $qb->andWhere($qb->expr()->in($this->searchfield, $data));
+        $qb->andWhere($qb->expr()->in($this->searchfield, array_reverse($data)));
 
         return $qb->getQuery()->getResult();
     }

@@ -8,6 +8,7 @@
 namespace Edge\Search;
 
 use Zend\Stdlib\ArrayUtils;
+use Zend\Filter\FilterInterface;
 
 class Filter
 {
@@ -33,12 +34,7 @@ class Filter
      */
     protected $validSearchFields = array();
 
-    /**
-     * Values and their replacements
-     *
-     * @var array
-     */
-    protected $replaceValues = array();
+    protected $filters = array();
 
     protected $data = array();
 
@@ -51,13 +47,9 @@ class Filter
 
     protected function extract($query)
     {
-        if (empty($this->validSearchFields)) {
-            throw new \Exception('No search fields were specified');
-        }
-
         $keywords = trim(str_replace('  ', ' ', preg_replace(self::QUERY_REGEX, '', $query)));
         if ($keywords !== '') {
-            $this->keywords = $keywords;
+            $this->setKeywords($keywords);
         }
 
         $params = array();
@@ -99,8 +91,30 @@ class Filter
      */
     public function addFieldValue($field, $value, $comparison = self::COMPARISON_EQUALS, $default = false)
     {
+        if ($this->hasSearchField($field)) {
+            if (!$default && $this->isDefaultOnly($field)) {
+                return $this;
+            }
+
+            if (isset($this->data[$field]) && !$default) {
+                foreach ($this->data[$field] as $key => $values) {
+                    if ($values['default']) {
+                        unset($this->data[$field][$key]);
+                    }
+                }
+            }
+
+            $this->data[$field][] = array(
+                'value'      => $this->replaceValue($field, $value),
+                'comparison' => $comparison,
+                'default'    => $default,
+            );
+
+            return $this;
+        }
+
         if ($field == self::PARAM_SORT) {
-            if (isset($this->validSearchFields[$value])) {
+            if ($this->hasSearchField($value)) {
                 $this->sort = $value;
             }
             return $this;
@@ -115,49 +129,39 @@ class Filter
             return $this;
         }
 
-        if (isset($this->validSearchFields[$field])) {
-            if (isset($this->data[$field])) {
-                foreach ($this->data[$field] as $key => $values) {
-                    if ($values['default']) {
-                        unset($this->data[$field][$key]);
-                    }
-                }
-            }
-
-            $this->data[$field][] = array(
-                'value'      => $this->replaceValue($field, $value),
-                'comparison' => $comparison,
-                'default'    => $default,
-                'field'      => $this->validSearchFields[$field]
-            );
-            return $this;
-        }
-
-        if ($default) {
-            $this->data[$field][] = array(
-                'value'      => $this->replaceValue($field, $value),
-                'comparison' => $comparison,
-                'default'    => $default,
-                'field'      => $field
-            );
-        }
-
         return $this;
     }
 
-    public function getFieldValues($field)
-    {
-        if (isset($this->data[$field])) {
-            return $this->data[$field];
-        }
-        return null;
-    }
-
+    /**
+     * Get all field values, each field contains an array of values
+     *
+     * @return array
+     */
     public function getAllFieldValues()
     {
         return $this->data;
     }
 
+    /**
+     * Get an array of values for a specific field
+     *
+     * @param  string $field
+     * @return array
+     */
+    public function getFieldValues($field)
+    {
+        if (isset($this->data[$field])) {
+            return $this->data[$field];
+        }
+        return array();
+    }
+
+    /**
+     * Set the query string to be extracted
+     *
+     * @param string $query
+     * @return \Edge\Search\Filter
+     */
     public function setQueryString($query)
     {
         $this->extract($query);
@@ -215,8 +219,8 @@ class Filter
 
     public function setSort($sort, $order = self::ORDER_DESC)
     {
-        if (!array_key_exists($sort, $this->validSearchFields)) {
-            throw new \Exception("Invalid sort field [$sort] specified");
+        if (!$this->hasSearchField($sort)) {
+            throw new Exception\InvalidArgumentException("Invalid sort field [$sort] specified");
         }
 
         if ($order !== self::ORDER_DESC) {
@@ -239,6 +243,11 @@ class Filter
         return $this;
     }
 
+    public function hasSearchField($field)
+    {
+        return isset($this->validSearchFields[$field]);
+    }
+
     public function getValidSearchFields()
     {
         return $this->validSearchFields;
@@ -246,19 +255,45 @@ class Filter
 
     public function getSearchField($field)
     {
-        if (!isset($this->validSearchFields[$field])) {
-            throw new \Exception("Invalid search field [$field] specified");
+        if (!$this->hasSearchField($field)) {
+            throw new Exception\InvalidArgumentException("Invalid search field [$field] specified");
         }
-        return $this->validSearchFields[$field];
+
+        $search = $this->validSearchFields[$field];
+
+        if (is_array($search)) {
+            return isset($search['field']) ? $search['field'] : $field;
+        }
+        
+        return $search;
+    }
+
+    public function isDefaultOnly($field)
+    {
+        $field = $this->getSearchField($field);
+        if (is_array($field) && isset($field['default_only'])) {
+            return $field['default_only'];
+        }
+        return false;
+    }
+
+    public function isNumeric($field)
+    {
+        $field = $this->getSearchField($field);
+        if (is_array($field) && isset($field['numeric'])) {
+            return $field['numeric'];
+        }
+        return false;
     }
 
     public function setDefaultValues(array $values)
     {
         foreach ($values as $field => $value) {
-            $comparison = self::COMPARISON_EQUALS;
             if (is_array($value)) {
                 $value = $value['value'];
-                $comparison = isset($value['comparison']) ? $value['comparison'] : $comparison;
+                $comparison = isset($value['comparison']) ? $value['comparison'] : self::COMPARISON_EQUALS;
+            } else {
+                $comparison = self::COMPARISON_EQUALS;
             }
             $this->addFieldValue($field, $value, $comparison, true);
         }
@@ -266,34 +301,52 @@ class Filter
         return $this;
     }
 
-    /**
-     * Set replace values
-     *
-     * @param array $values An array of fields containing key value pair arrays,
-     *                      where the key equals the expected string and the value
-     *                      equals the replacement string
-     * @return Filter
-    */
-    public function setReplaceValues(array $values)
+    public function addValueFilter($field, FilterInterface $filter)
     {
-        $this->replaceValues = $values;
+        $this->filters[$field] = $filter;
         return $this;
     }
 
-    public function getReplaceValues()
+    public function hasValueFilter($field)
     {
-        return $this->replaceValues;
+        return array_key_exists($field, $this->filters)
+               || array_key_exists('*', $this->filters);
+    }
+
+    /**
+     * Get value filter for field
+     *
+     * @param string $field
+     * @return FilterInterface
+     * @throws Exception\InvalidArgumentException
+     */
+    public function getValueFilter($field)
+    {
+        if (isset($this->filters[$field])) {
+            return $this->filters[$field];
+        }
+
+        if (!isset($this->filters['*'])) {
+            throw new Exception\InvalidArgumentException(sprintf(
+                '%s: no value filter by name of "%s", and no wildcard strategy present',
+                __METHOD__,
+                $field
+            ));
+        }
+
+        return $this->filters['*'];
+    }
+
+    public function removeValueFilter($field)
+    {
+        unset($this->filters[$field]);
+        return $this;
     }
 
     protected function replaceValue($field, $value)
     {
-        if (isset($this->replaceValues[$field]) && is_array($this->replaceValues[$field])) {
-            foreach($this->replaceValues[$field] as $old => $new) {
-                if ($value == $old) {
-                    $value = $new;
-                    break;
-                }
-            }
+        if ($this->hasValueFilter($field)) {
+            $value = $this->getValueFilter($field)->filter($value);
         }
         return $value;
     }
