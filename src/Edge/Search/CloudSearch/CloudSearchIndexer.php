@@ -14,6 +14,13 @@ class CloudSearchIndexer implements IndexerInterface
 
     protected $documentEndpoint;
 
+    /**
+     * Throw exceptions if indexing fails
+     *
+     * @var bool
+     */
+    protected $throwExceptions = false;
+
     protected $apiversion = '2011-02-01';
 
     public function __construct($endpoint)
@@ -122,6 +129,9 @@ class CloudSearchIndexer implements IndexerInterface
         $response = $client->send();
 
         if (!$response->isSuccess()) {
+            if ($this->throwExceptions) {
+                throw new Exception\IndexException("Bad response received from CloudSearch.\n" . $response->toString());
+            }
             return false;
         }
 
@@ -129,6 +139,19 @@ class CloudSearchIndexer implements IndexerInterface
         $count   = $results['adds'] + $results['deletes'];
 
         return $count != count($data) ? 0 : $count;
+    }
+
+    /**
+     * Set whether to throw exceptions on failed indexing,
+     * if false (default) the entity will have unindexed set on failure
+     *
+     * @param bool $throwExceptions
+     * @return \Edge\Search\CloudSearch\CloudSearchIndexer
+     */
+    public function setThrowExceptions($throwExceptions)
+    {
+        $this->throwExceptions = $throwExceptions;
+        return $this;
     }
 
     protected function getDocumentEndpoint()
