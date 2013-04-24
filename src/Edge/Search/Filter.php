@@ -253,24 +253,29 @@ class Filter
         return $this->validSearchFields;
     }
 
-    public function getSearchField($field)
+    public function getField($field)
     {
         if (!$this->hasSearchField($field)) {
-            throw new Exception\InvalidArgumentException("Invalid search field [$field] specified");
+            throw new Exception\InvalidArgumentException("Invalid field [$field] specified");
         }
 
-        $search = $this->validSearchFields[$field];
+        return $this->validSearchFields[$field];
+    }
+
+    public function getSearchField($field)
+    {
+        $search = $this->getField($field);
 
         if (is_array($search)) {
             return isset($search['field']) ? $search['field'] : $field;
         }
-        
+
         return $search;
     }
 
     public function isDefaultOnly($field)
     {
-        $field = $this->getSearchField($field);
+        $field = $this->getField($field);
         if (is_array($field) && isset($field['default_only'])) {
             return $field['default_only'];
         }
@@ -279,7 +284,7 @@ class Filter
 
     public function isNumeric($field)
     {
-        $field = $this->getSearchField($field);
+        $field = $this->getField($field);
         if (is_array($field) && isset($field['numeric'])) {
             return $field['numeric'];
         }

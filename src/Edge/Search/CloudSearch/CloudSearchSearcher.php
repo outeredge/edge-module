@@ -71,7 +71,7 @@ class CloudSearchSearcher implements SearcherInterface
         $response = $client->send();
 
         if (!$response->isSuccess()) {
-            throw new Exception\RuntimeException('Invalid response received from CloudSearch');
+            throw new Exception\RuntimeException("Invalid response received from CloudSearch.\n" . $response->getContent());
         }
 
         $results = json_decode($response->getContent(), true);
@@ -105,10 +105,10 @@ class CloudSearchSearcher implements SearcherInterface
                 switch ($data['comparison']) {
                     case Filter::COMPARISON_EQUALS:
                     case Filter::COMPARISON_LIKE:
-                        $params[] = $this->getEqualsExpr($filter->getSearchField($field), $data['value']);
+                        $params[] = $this->getEqualsExpr($filter->getSearchField($field), $data['value'], $filter->isNumeric($field));
                         break;
                     case Filter::COMPARISON_NOT_EQUALS:
-                        $params[] = $this->getNotEqualsExpr($filter->getSearchField($field), $data['value']);
+                        $params[] = $this->getNotEqualsExpr($filter->getSearchField($field), $data['value'], $filter->isNumeric($field));
                         break;
                     case Filter::COMPARISON_GREATER:
                         // @todo in here we could possibly add a not for the value and a greater than or equal to for the value also?
@@ -158,27 +158,45 @@ class CloudSearchSearcher implements SearcherInterface
         return implode('&', $query);
     }
 
-    protected function getEqualsExpr($field, $value)
+    protected function getEqualsExpr($field, $value, $numeric = false)
     {
         if (is_array($field)){
             $expr = array();
             foreach ($field as $fieldName) {
-                $expr[] = sprintf("%s:'%s'", $fieldName, addslashes($value));
+                if ($numeric) {
+                    $expr[] = sprintf("%s:%s", $fieldName, $value);
+                } else {
+                    $expr[] = sprintf("%s:'%s'", $fieldName, addslashes($value));
+                }
             }
             return sprintf("(or %s)", implode(' ', $expr));
         }
+
+        if ($numeric) {
+            return sprintf("(and %s:%s)", $field, addslashes($value));
+        }
+
         return sprintf("(field %s '%s')", $field, addslashes($value));
     }
 
-    protected function getNotEqualsExpr($field, $value)
+    protected function getNotEqualsExpr($field, $value, $numeric = false)
     {
         if (is_array($field)){
             $expr = array();
             foreach ($field as $fieldName) {
-                $expr[] = sprintf("%s:'-%s'", $fieldName, addslashes($value));
+                if ($numeric) {
+                    $expr[] = sprintf("%s:-%s", $fieldName, $value);
+                } else {
+                    $expr[] = sprintf("%s:'-%s'", $fieldName, addslashes($value));
+                }
             }
             return sprintf("(or %s)", implode(' ', $expr));
         }
+
+        if ($numeric) {
+            return sprintf("(not %s:%s)", $field, $value);
+        }
+
         return sprintf("(not %s:'%s')", $field, addslashes($value));
     }
 
