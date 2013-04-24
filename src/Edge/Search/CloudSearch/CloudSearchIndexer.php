@@ -71,12 +71,6 @@ class CloudSearchIndexer implements IndexerInterface
             $count = $count + $result;
         }
 
-        if (reset($entities) instanceof IndexableEntityInterface) {
-            foreach ($entities as $entity) {
-                $entity->setUnindexed(!$count);
-            }
-        }
-
         return $count;
     }
 

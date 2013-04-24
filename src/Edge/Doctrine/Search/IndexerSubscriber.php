@@ -4,6 +4,7 @@ namespace Edge\Doctrine\Search;
 
 use Doctrine\Common\EventSubscriber;
 use Doctrine\ORM\Events;
+use Doctrine\ORM\Event\PreUpdateEventArgs;
 use Doctrine\ORM\Event\LifecycleEventArgs;
 use Edge\Search\Exception\IndexException;
 use Edge\Search\IndexerInterface;
@@ -25,15 +26,23 @@ class IndexerSubscriber implements EventSubscriber
     {
         $entity = $args->getEntity();
         if ($entity instanceof IndexableEntityInterface) {
-            $this->indexer->add($entity);
+            if (!$this->indexer->add($entity)) {
+                $entity->setUnindexed(true);
+            } else {
+                $entity->setUnindexed(false);
+            }
         }
     }
 
-    public function postUpdate(LifecycleEventArgs $args)
+    public function preUpdate(PreUpdateEventArgs $args)
     {
         $entity = $args->getEntity();
         if ($entity instanceof IndexableEntityInterface) {
-            $this->indexer->update($entity);
+            if (!$this->indexer->update($entity)) {
+                $entity->setUnindexed(true);
+            } else {
+                $entity->setUnindexed(false);
+            }
         }
     }
 
@@ -41,13 +50,7 @@ class IndexerSubscriber implements EventSubscriber
     {
         $entity = $args->getEntity();
         if ($entity instanceof IndexableEntityInterface) {
-            if ($entity->getUnindexed()) {
-                return;
-            }
-
-            $this->indexer->delete($entity);
-
-            if ($entity->getUnindexed()) {
+            if (!$this->indexer->delete($entity)) {
                 throw new IndexException('Unable to remove entity from CloudSearch');
             }
         }
@@ -57,7 +60,7 @@ class IndexerSubscriber implements EventSubscriber
     {
         return array(
             Events::postPersist,
-            Events::postUpdate,
+            Events::preUpdate,
             Events::preRemove
         );
     }
