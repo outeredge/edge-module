@@ -28,7 +28,7 @@ class PhantomJsService
         $result = exec($cmd, $output, $code);
 
         if ($code > 0) {
-            throw new \RuntimeException(sprintf('Unable to run command. %s'));
+            throw new Exception\RuntimeException(sprintf('Unable to run command. %s', $result));
         }
 
         return $result;

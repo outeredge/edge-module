@@ -2,6 +2,7 @@
 
 namespace Edge\Paginator;
 
+use Edge\Entity\AbstractEntity;
 use Zend\Paginator\Paginator as ZendPaginator;
 
 class Paginator extends ZendPaginator
@@ -34,6 +35,9 @@ class Paginator extends ZendPaginator
 
     public function itemToArray($item, $params)
     {
-        return $item->toArray($params);
+        if ($item instanceof AbstractEntity) {
+            return $item->toArray($params);
+        }
+        return $item;
     }
 }
