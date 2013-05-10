@@ -78,6 +78,10 @@ class CloudSearchSearcher implements SearcherInterface
 
         $this->count = $results['hits']['found'];
 
+        if ($this->count < 1) {
+            return array();
+        }
+
         if ($this->returnIdResults) {
             $results = $this->extractResultsToIdArray($results);
         }

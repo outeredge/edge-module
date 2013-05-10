@@ -125,7 +125,7 @@ class MailGun implements TransportInterface
             $data['o:testmode'] = 'yes';
         }
 
-        return $data;
+        return array_filter($data);
     }
 
     /**
