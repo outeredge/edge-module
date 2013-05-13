@@ -106,6 +106,10 @@ class CloudSearchSearcher implements SearcherInterface
         $params = array();
         foreach ($filter->getAllFieldValues() as $field => $values) {
             foreach ($values as $data) {
+                if (empty($data['value'])) {
+                    $data['value'] = 0;
+                }
+
                 switch ($data['comparison']) {
                     case Filter::COMPARISON_EQUALS:
                     case Filter::COMPARISON_LIKE:
