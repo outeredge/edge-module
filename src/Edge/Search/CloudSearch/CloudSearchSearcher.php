@@ -2,59 +2,49 @@
 
 namespace Edge\Search\CloudSearch;
 
+use Edge\Search\AbstractSearcher;
 use Edge\Search\Exception;
 use Edge\Search\Filter;
-use Edge\Search\ConverterInterface;
-use Edge\Search\SearcherInterface;
 use Zend\Http;
 
-class CloudSearchSearcher implements SearcherInterface
+class CloudSearchSearcher extends AbstractSearcher
 {
-    protected $searchEndpoint;
-
-    protected $apiversion = '2011-02-01';
-
-    protected $count;
+    /**
+     * @var CloudSearchSearcherOptions
+     */
+    protected $options;
 
     /**
-     * @var Filter
+     * Set options
+     *
+     * @param CloudSearchSearcherOptions|array $options
      */
-    protected $filter;
-
-    /**
-     * @var ConverterInterface
-     */
-    protected $converter;
-
-    /**
-     * @var bool
-     */
-    protected $returnIdResults = true;
-
-    /**
-     * @param string $endpoint your CloudSearch search endpoint
-     * @param boolean $returnIdResults whether to return an array of ID's or all results
-     */
-    public function __construct($endpoint, $returnIdResults = true)
+    public function setOptions($options)
     {
-        $this->searchEndpoint  = $endpoint;
-        $this->returnIdResults = $returnIdResults;
+        if (!$options instanceof CloudSearchSearcherOptions) {
+            $options = new CloudSearchSearcherOptions($options);
+        }
+        $this->options = $options;
     }
 
     /**
-     * @return int
+     * @return CloudSearchSearcherOptions
+     * @throws RuntimeException
      */
-    public function getCount()
+    public function getOptions()
     {
-        return $this->count;
+        if (null === $this->options) {
+            throw new Exception\RuntimeException('No options were specified');
+        }
+        return $this->options;
     }
 
     /**
-     * @return array
+     * @return mixed
      */
     public function getResults($offset, $itemCountPerPage)
     {
-        $query = $this->createSearchQuery($this->getFilter(), $offset, $itemCountPerPage);
+        $query = $this->createSearchQuery($offset, $itemCountPerPage);
 
         $adapter = new Http\Client\Adapter\Curl();
         $adapter->setOptions(array(
@@ -66,7 +56,7 @@ class CloudSearchSearcher implements SearcherInterface
         $client  = new Http\Client();
         $client->setAdapter($adapter);
         $client->setMethod('GET');
-        $client->setUri($this->getSearchEndpoint() . $query);
+        $client->setUri($this->getOptions()->getSearchEndpoint() . $query);
 
         $response = $client->send();
 
@@ -82,7 +72,7 @@ class CloudSearchSearcher implements SearcherInterface
             return array();
         }
 
-        if ($this->returnIdResults) {
+        if ($this->getOptions()->getReturnIdResults()) {
             $results = $this->extractResultsToIdArray($results);
         }
 
@@ -96,14 +86,15 @@ class CloudSearchSearcher implements SearcherInterface
     /**
      * Create a urlencoded search string from a Filter
      *
-     * @param  \Edge\Search\Filter $filter
      * @param  $offset
      * @param  $itemCountPerPage
      * @return string
      */
-    public function createSearchQuery(Filter $filter, $offset = 0, $itemCountPerPage = 10)
+    public function createSearchQuery($offset = 0, $itemCountPerPage = 10)
     {
+        $filter = $this->getFilter();
         $params = array();
+
         foreach ($filter->getAllFieldValues() as $field => $values) {
             foreach ($values as $data) {
                 if (empty($data['value'])) {
@@ -113,23 +104,19 @@ class CloudSearchSearcher implements SearcherInterface
                 switch ($data['comparison']) {
                     case Filter::COMPARISON_EQUALS:
                     case Filter::COMPARISON_LIKE:
-                        $params[] = $this->getEqualsExpr($filter->getSearchField($field), $data['value'], $filter->isNumeric($field));
+                        $params[] = $this->getEqualsExpr($field, $data['value']);
                         break;
                     case Filter::COMPARISON_NOT_EQUALS:
-                        $params[] = $this->getNotEqualsExpr($filter->getSearchField($field), $data['value'], $filter->isNumeric($field));
+                        $params[] = $this->getNotEqualsExpr($field, $data['value']);
                         break;
                     case Filter::COMPARISON_GREATER:
                         // @todo in here we could possibly add a not for the value and a greater than or equal to for the value also?
                     case Filter::COMPARISON_GREATER_OR_EQ:
-                        if ($filter->isNumeric($field)) {
-                            $params[] = $this->getGreaterThanOrEqualToExpr($filter->getSearchField($field), $data['value']);
-                        }
+                        $params[] = $this->getGreaterThanOrEqualToExpr($field, $data['value']);
                         break;
                     case Filter::COMPARISON_LESS:
                     case Filter::COMPARISON_LESS_OR_EQ:
-                        if ($filter->isNumeric($field)) {
-                            $params[] = $this->getLessThanOrEqualToExpr($filter->getSearchField($field), $data['value']);
-                        }
+                        $params[] = $this->getLessThanOrEqualToExpr($field, $data['value']);
                         break;
                     default:
                         continue;
@@ -166,12 +153,14 @@ class CloudSearchSearcher implements SearcherInterface
         return implode('&', $query);
     }
 
-    protected function getEqualsExpr($field, $value, $numeric = false)
+    protected function getEqualsExpr($search, $value)
     {
-        if (is_array($field)){
+        $field = $this->getMappedField($search);
+
+        if (is_array($field['field'])){
             $expr = array();
-            foreach ($field as $fieldName) {
-                if ($numeric) {
+            foreach ($field['field'] as $fieldName) {
+                if ($field['numeric']) {
                     $expr[] = sprintf("%s:%s", $fieldName, $value);
                 } else {
                     $expr[] = sprintf("%s:'%s'", $fieldName, addslashes($value));
@@ -180,19 +169,21 @@ class CloudSearchSearcher implements SearcherInterface
             return sprintf("(or %s)", implode(' ', $expr));
         }
 
-        if ($numeric) {
-            return sprintf("(and %s:%s)", $field, addslashes($value));
+        if ($field['numeric']) {
+            return sprintf("(and %s:%s)", $field['field'], addslashes($value));
         }
 
-        return sprintf("(field %s '%s')", $field, addslashes($value));
+        return sprintf("(field %s '%s')", $field['field'], addslashes($value));
     }
 
-    protected function getNotEqualsExpr($field, $value, $numeric = false)
+    protected function getNotEqualsExpr($search, $value)
     {
-        if (is_array($field)){
+        $field = $this->getMappedField($search);
+
+        if (is_array($field['field'])){
             $expr = array();
-            foreach ($field as $fieldName) {
-                if ($numeric) {
+            foreach ($field['field'] as $fieldName) {
+                if ($field['numeric']) {
                     $expr[] = sprintf("%s:-%s", $fieldName, $value);
                 } else {
                     $expr[] = sprintf("%s:'-%s'", $fieldName, addslashes($value));
@@ -201,35 +192,47 @@ class CloudSearchSearcher implements SearcherInterface
             return sprintf("(or %s)", implode(' ', $expr));
         }
 
-        if ($numeric) {
-            return sprintf("(not %s:%s)", $field, $value);
+        if ($field['numeric']) {
+            return sprintf("(not %s:%s)", $field['field'], $value);
         }
 
-        return sprintf("(not %s:'%s')", $field, addslashes($value));
+        return sprintf("(not %s:'%s')", $field['field'], addslashes($value));
     }
 
-    protected function getGreaterThanOrEqualToExpr($field, $value)
+    protected function getGreaterThanOrEqualToExpr($search, $value)
     {
-        if (is_array($field)){
+        $field = $this->getMappedField($search);
+
+        if (!$field['numeric']) {
+            return;
+        }
+
+        if (is_array($field['field'])){
             $expr = array();
-            foreach ($field as $fieldName) {
+            foreach ($field['field'] as $fieldName) {
                 $expr[] = sprintf("%s:%s..", $fieldName, $value);
             }
             return sprintf("(or %s)", implode(' ', $expr));
         }
-        return sprintf("%s:%s..", $field, $value);
+        return sprintf("%s:%s..", $field['field'], $value);
     }
 
-    protected function getLessThanOrEqualToExpr($field, $value)
+    protected function getLessThanOrEqualToExpr($search, $value)
     {
-        if (is_array($field)){
+        $field = $this->getMappedField($search);
+
+        if (!$field['numeric']) {
+            return;
+        }
+
+        if (is_array($field['field'])){
             $expr = array();
-            foreach ($field as $fieldName) {
+            foreach ($field['field'] as $fieldName) {
                 $expr[] = sprintf("%s:..%s", $fieldName, $value);
             }
             return sprintf("(or %s)", implode(' ', $expr));
         }
-        return sprintf("%s:..%s", $field, $value);
+        return sprintf("%s:..%s", $field['field'], $value);
     }
 
     protected function extractResultsToIdArray(array $results)
@@ -241,37 +244,20 @@ class CloudSearchSearcher implements SearcherInterface
         return $idResults;
     }
 
-    public function setFilter(Filter $filter)
+    public function getMappedField($name)
     {
-        $this->filter = $filter;
-        return $this;
-    }
+        $mappedFields = $this->getOptions()->getFieldMappings();
 
-    public function getFilter()
-    {
-        if (null === $this->filter) {
-            throw new Exception\RuntimeException('No filter available!');
+        if (!isset($mappedFields[$name])) {
+            throw new Exception\InvalidArgumentException("Invalid field [$name] specified");
         }
-        return $this->filter;
-    }
 
-    public function setConverter(ConverterInterface $converter)
-    {
-        $this->converter = $converter;
-        return $this;
-    }
+        $field = $mappedFields[$name];
 
-    public function getConverter()
-    {
-        return $this->converter;
-    }
+        if (is_array($field) && isset($field['field'])) {
+            return isset($field['numeric']) ? $field : array('field' => $field['field'], 'numeric' => false);
+        }
 
-    public function getSearchEndpoint()
-    {
-        return sprintf(
-            'https://%s/%s/search?',
-            $this->searchEndpoint,
-            $this->apiversion
-        );
+        return array('field' => $field, 'numeric' => false);
     }
 }

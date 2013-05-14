@@ -30,9 +30,10 @@ class Filter
 
     /**
      * Allowed search fields
+     *
      * @var array
      */
-    protected $validSearchFields = array();
+    protected $searchFields = array();
 
     protected $filters = array();
 
@@ -92,10 +93,6 @@ class Filter
     public function addFieldValue($field, $value, $comparison = self::COMPARISON_EQUALS, $default = false)
     {
         if ($this->hasSearchField($field)) {
-            if (!$default && $this->isDefaultOnly($field)) {
-                return $this;
-            }
-
             if (isset($this->data[$field]) && !$default) {
                 foreach ($this->data[$field] as $key => $values) {
                     if ($values['default']) {
@@ -130,6 +127,17 @@ class Filter
         }
 
         return $this;
+    }
+
+    public function addStaticFieldValue($field, $value, $comparison = self::COMPARISON_EQUALS)
+    {
+        $this->data[$field] = array(
+            array(
+                'value'      => $this->replaceValue($field, $value),
+                'comparison' => $comparison,
+                'default'    => true
+            )
+        );
     }
 
     /**
@@ -233,62 +241,33 @@ class Filter
         return $this;
     }
 
-    public function setValidSearchFields(array $fields)
+    public function setSearchFields(array $fields)
     {
         if (ArrayUtils::isList($fields)) {
-            $this->validSearchFields = array_flip($fields);
+            $this->searchFields = array_flip($fields);
         } else {
-            $this->validSearchFields = $fields;
+            $this->searchFields = $fields;
         }
         return $this;
     }
 
+    public function getAllSearchFields()
+    {
+        return $this->searchFields;
+    }
+
     public function hasSearchField($field)
     {
-        return isset($this->validSearchFields[$field]);
+        return isset($this->searchFields[$field]);
     }
 
-    public function getValidSearchFields()
-    {
-        return $this->validSearchFields;
-    }
-
-    public function getField($field)
+    public function getSearchField($field)
     {
         if (!$this->hasSearchField($field)) {
             throw new Exception\InvalidArgumentException("Invalid field [$field] specified");
         }
 
-        return $this->validSearchFields[$field];
-    }
-
-    public function getSearchField($field)
-    {
-        $search = $this->getField($field);
-
-        if (is_array($search)) {
-            return isset($search['field']) ? $search['field'] : $field;
-        }
-
-        return $search;
-    }
-
-    public function isDefaultOnly($field)
-    {
-        $field = $this->getField($field);
-        if (is_array($field) && isset($field['default_only'])) {
-            return $field['default_only'];
-        }
-        return false;
-    }
-
-    public function isNumeric($field)
-    {
-        $field = $this->getField($field);
-        if (is_array($field) && isset($field['numeric'])) {
-            return $field['numeric'];
-        }
-        return false;
+        return $this->searchFields[$field];
     }
 
     public function setDefaultValues(array $values)
@@ -305,6 +284,25 @@ class Filter
 
         return $this;
     }
+
+    protected function replaceValue($field, $value)
+    {
+        if ($this->hasValueFilter($field)) {
+            $value = $this->getValueFilter($field)->filter($value);
+        }
+        return $value;
+    }
+
+    public function clear()
+    {
+        $this->data = array();
+        return $this;
+    }
+
+
+
+
+
 
     public function addValueFilter($field, FilterInterface $filter)
     {
@@ -345,20 +343,6 @@ class Filter
     public function removeValueFilter($field)
     {
         unset($this->filters[$field]);
-        return $this;
-    }
-
-    protected function replaceValue($field, $value)
-    {
-        if ($this->hasValueFilter($field)) {
-            $value = $this->getValueFilter($field)->filter($value);
-        }
-        return $value;
-    }
-
-    public function clear()
-    {
-        $this->data = array();
         return $this;
     }
 }

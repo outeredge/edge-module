@@ -16,11 +16,23 @@ interface SearcherInterface
      */
     public function getCount();
 
+    /**
+     * @param Filter $filter
+     */
     public function setFilter(Filter $filter);
 
+    /**
+     * @return Filter
+     */
     public function getFilter();
 
+    /**
+     * @param ConverterInterface $converter
+     */
     public function setConverter(ConverterInterface $converter);
 
+    /**
+     * @return ConverterInterface
+     */
     public function getConverter();
 }

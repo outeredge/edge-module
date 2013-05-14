@@ -5,7 +5,7 @@ namespace Edge\Paginator\Adapter;
 use Edge\Search\SearcherInterface;
 use Zend\Paginator\Adapter\AdapterInterface;
 
-class SearcherPaginator implements AdapterInterface
+class SearcherAdapter implements AdapterInterface
 {
     /**
      * @var SearcherInterface

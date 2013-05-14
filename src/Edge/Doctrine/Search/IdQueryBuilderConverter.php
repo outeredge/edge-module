@@ -5,7 +5,7 @@ namespace Edge\Doctrine\Search;
 use Doctrine\ORM\QueryBuilder;
 use Edge\Search\ConverterInterface;
 
-class IdResultsConverter implements ConverterInterface
+class IdQueryBuilderConverter implements ConverterInterface
 {
     /**
      * @var \Doctrine\ORM\QueryBuilder

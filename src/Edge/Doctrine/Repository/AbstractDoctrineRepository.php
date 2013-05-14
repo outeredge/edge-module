@@ -4,7 +4,6 @@ namespace Edge\Doctrine\Repository;
 
 use Edge\Entity\AbstractEntity;
 use Edge\Entity\Repository\RepositoryInterface;
-use Edge\Doctrine\Search\Filter;
 use Edge\Service\Exception\DeleteException;
 use Doctrine\DBAL\DBALException;
 use Doctrine\ORM\EntityRepository;
@@ -14,35 +13,6 @@ use Zend\EventManager\EventManagerInterface;
 
 abstract class AbstractDoctrineRepository extends EntityRepository implements RepositoryInterface, EventManagerAwareInterface
 {
-    /**
-     * Allowed search fields
-     * @var array
-     */
-    protected static $validSearchFields = array();
-
-    /**
-     * Fields to apply a %like% search to
-     * @var array
-     */
-    protected static $keywordSearchFields = array();
-
-    /**
-     * Mappings between entity property and join alias
-     * @var array
-     */
-    protected static $joinTableAliases = array();
-
-    /**
-     * Array of field names and their default values
-     * @var array
-     */
-    protected static $defaultValues = array();
-
-    /**
-     * @var Filter
-     */
-    protected static $filter;
-
     /**
      * @var EventManagerInterface
      */
@@ -94,41 +64,6 @@ abstract class AbstractDoctrineRepository extends EntityRepository implements Re
             $this->setEventManager(new EventManager());
         }
         return $this->events;
-    }
-
-    /**
-     * Create a filtered query builder
-     *
-     * @param string $query
-     * @param string $alias
-     * @return \Doctrine\ORM\QueryBuilder
-     */
-    public function createFilteredQueryBuilder($query, $alias)
-    {
-        $qb     = $this->createQueryBuilder($alias);
-        $filter = $this->getFilter();
-        $filter->setMetaData($this->getClassMetadata())
-               ->setQueryString($query);
-
-        return $filter->populateQueryBuilder($qb);
-    }
-
-    /**
-     * Get Filter class populated with repositories search fields
-     *
-     * @return Filter
-     */
-    public static function getFilter()
-    {
-        if (null === static::$filter) {
-            $filter = new Filter();
-            $filter->setValidSearchFields(static::$validSearchFields);;
-            $filter->setDefaultValues(static::$defaultValues);
-            $filter->setJoinTableAliases(static::$joinTableAliases);
-            $filter->setKeywordSearchFields(static::$keywordSearchFields);
-            static::$filter = $filter;
-        }
-        return static::$filter;
     }
 
     /**
