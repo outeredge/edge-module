@@ -2,7 +2,6 @@
 
 namespace Edge\Doctrine\Search;
 
-use Doctrine\Common\Persistence\Mapping\ClassMetadata;
 use Zend\Stdlib\AbstractOptions;
 
 class DoctrineSearcherOptions extends AbstractOptions
@@ -12,9 +11,6 @@ class DoctrineSearcherOptions extends AbstractOptions
     protected $keywordFields = array();
 
     protected $joinTables = array();
-
-    protected $metadata;
-
 
     public function setFieldMappings(array $fields)
     {
@@ -56,22 +52,5 @@ class DoctrineSearcherOptions extends AbstractOptions
     public function getJoinTables()
     {
         return $this->joinTables;
-    }
-
-    /**
-     * @param ClassMetadata $metadata
-     */
-    public function setMetaData(ClassMetadata $metadata)
-    {
-        $this->metadata = $metadata;
-        return $this;
-    }
-
-    /**
-     * @return ClassMetadata
-     */
-    public function getMetaData()
-    {
-        return $this->metadata;
     }
 }

@@ -2,11 +2,13 @@
 
 namespace Edge\Doctrine\Search;
 
+use ArrayIterator;
 use DateTime;
 use Doctrine\ORM\QueryBuilder;
 use Edge\Search\AbstractSearcher;
 use Edge\Search\Exception;
 use Edge\Search\Filter;
+use Doctrine\ORM\Tools\Pagination\Paginator as DoctrinePaginator;
 
 class DoctrineSearcher extends AbstractSearcher
 {
@@ -70,7 +72,7 @@ class DoctrineSearcher extends AbstractSearcher
     }
 
     /**
-     * @return mixed
+     * @return ArrayIterator
      */
     public function getResults($offset, $itemCountPerPage)
     {
@@ -89,11 +91,12 @@ class DoctrineSearcher extends AbstractSearcher
             foreach ($values as $data) {
                 $i++;
                 $param = ':param' . $i++;
+                $value = $this->prepareValue($data['value'], $field);
 
-                $value = $this->handleTypeConversions($data['value'], $field);
+                $expr = $qb->expr()->orX();
+                $mappedField = $this->getMappedField($field);
 
-                $expr  = $qb->expr()->orX();
-                foreach ((array) $this->getMappedField($field) as $fieldName) {
+                foreach ((array) $mappedField['field'] as $fieldName) {
                     switch ($data['comparison']) {
                         case Filter::COMPARISON_EQUALS:
                             $expr->add($this->getEqualsExpr($fieldName, $value, $param));
@@ -148,24 +151,48 @@ class DoctrineSearcher extends AbstractSearcher
 
         if (null !== $filter->getSortField()) {
             $this->addJoin($filter->getSortField());
-            $qb->orderBy($this->getMappedField($filter->getSortField()), $filter->getSortOrder());
+            $mappedSortField = $this->getMappedField($filter->getSortField());
+            $qb->orderBy($mappedSortField['field'], $filter->getSortOrder());
         }
 
-//        $this->count = $results['hits']['found'];
-//
-//        if ($this->count < 1) {
-//            return array();
-//        }
+        $qb->setFirstResult($offset);
+        $qb->setMaxResults($itemCountPerPage);
 
+        $paginator = new DoctrinePaginator($qb, count($qb->getDQLPart('join')));
+        $paginator->setUseOutputWalkers(false);
 
+        $this->count = $paginator->count();
 
-//        if (null !== $this->getConverter()) {
-//            $results = $this->getConverter()->convert($results);
-//        }
+        if (0 == $this->count) {
+            return new ArrayIterator(array());
+        }
 
-        die($qb->getDQL());
+        $results = $paginator->getIterator();
 
-        return $qb;
+        foreach ($this->getConverters() as $converter) {
+            $results = $converter->convert($results);
+        }
+
+        return $results;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    protected function handleTypeConversions($value, $type)
+    {
+        switch($type) {
+            case 'datetime':
+            case 'date':
+                if (!$value instanceof DateTime && null !== $value) {
+                    $value = new DateTime($value);
+                }
+                break;
+            default:
+                break;
+        }
+
+        return $value;
     }
 
     /**
@@ -198,30 +225,6 @@ class DoctrineSearcher extends AbstractSearcher
         }
 
         $this->joins[$joinName] = true;
-    }
-
-    /**
-     * Handle conversions of strings to relevant field types
-     *
-     * @param  string  $value
-     * @param  string  $field
-     * @return mixed
-     */
-    protected function handleTypeConversions($value, $field)
-    {
-        return $value;
-
-        //@todo change this to use the value converters?
-        switch($this->getMetaData()->getTypeOfField($field)) {
-            case 'datetime':
-            case 'date':
-                $value = new DateTime($value);
-                break;
-            default:
-                break;
-        }
-
-        return $value;
     }
 
     /**
@@ -317,16 +320,5 @@ class DoctrineSearcher extends AbstractSearcher
     protected function getLassThanOrEqualToExpr($field, $paramName)
     {
         return $this->getQueryBuilder()->expr()->lte($field, $paramName);
-    }
-
-    public function getMappedField($name)
-    {
-        $mappedFields = $this->getOptions()->getFieldMappings();
-
-        if (!isset($mappedFields[$name])) {
-            throw new Exception\InvalidArgumentException("Invalid field [$name] specified");
-        }
-
-        return $mappedFields[$name];
     }
 }

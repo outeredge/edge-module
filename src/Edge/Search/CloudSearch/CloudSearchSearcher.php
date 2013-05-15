@@ -2,9 +2,11 @@
 
 namespace Edge\Search\CloudSearch;
 
+use DateTime;
 use Edge\Search\AbstractSearcher;
 use Edge\Search\Exception;
 use Edge\Search\Filter;
+use Zend\Filter\DateTimeFormatter;
 use Zend\Http;
 
 class CloudSearchSearcher extends AbstractSearcher
@@ -40,7 +42,7 @@ class CloudSearchSearcher extends AbstractSearcher
     }
 
     /**
-     * @return mixed
+     * @return array
      */
     public function getResults($offset, $itemCountPerPage)
     {
@@ -68,7 +70,7 @@ class CloudSearchSearcher extends AbstractSearcher
 
         $this->count = $results['hits']['found'];
 
-        if ($this->count < 1) {
+        if (0 == $this->count) {
             return array();
         }
 
@@ -76,8 +78,8 @@ class CloudSearchSearcher extends AbstractSearcher
             $results = $this->extractResultsToIdArray($results);
         }
 
-        if (null !== $this->getConverter()) {
-            $results = $this->getConverter()->convert($results);
+        foreach ($this->getConverters() as $converter) {
+            $results = $converter->convert($results);
         }
 
         return $results;
@@ -97,10 +99,7 @@ class CloudSearchSearcher extends AbstractSearcher
 
         foreach ($filter->getAllFieldValues() as $field => $values) {
             foreach ($values as $data) {
-                if (empty($data['value'])) {
-                    $data['value'] = 0;
-                }
-
+                $data['value'] = $this->prepareValue($data['value'], $field);
                 switch ($data['comparison']) {
                     case Filter::COMPARISON_EQUALS:
                     case Filter::COMPARISON_LIKE:
@@ -153,6 +152,27 @@ class CloudSearchSearcher extends AbstractSearcher
         return implode('&', $query);
     }
 
+    /**
+     * {@inheritdoc}
+     */
+    protected function handleTypeConversions($value, $type)
+    {
+        switch($type) {
+            case 'date':
+                $filter = new DateTimeFormatter(array('format' => 'U'));
+                $value = $filter->filter($value);
+                break;
+            default:
+                break;
+        }
+
+        if (empty($value)) {
+            $value = 0;
+        }
+
+        return $value;
+    }
+
     protected function getEqualsExpr($search, $value)
     {
         $field = $this->getMappedField($search);
@@ -160,7 +180,7 @@ class CloudSearchSearcher extends AbstractSearcher
         if (is_array($field['field'])){
             $expr = array();
             foreach ($field['field'] as $fieldName) {
-                if ($field['numeric']) {
+                if ($field['type'] == 'numeric' || $field['type'] == 'date') {
                     $expr[] = sprintf("%s:%s", $fieldName, $value);
                 } else {
                     $expr[] = sprintf("%s:'%s'", $fieldName, addslashes($value));
@@ -169,7 +189,7 @@ class CloudSearchSearcher extends AbstractSearcher
             return sprintf("(or %s)", implode(' ', $expr));
         }
 
-        if ($field['numeric']) {
+        if ($field['type'] == 'numeric' || $field['type'] == 'date') {
             return sprintf("(and %s:%s)", $field['field'], addslashes($value));
         }
 
@@ -183,7 +203,7 @@ class CloudSearchSearcher extends AbstractSearcher
         if (is_array($field['field'])){
             $expr = array();
             foreach ($field['field'] as $fieldName) {
-                if ($field['numeric']) {
+                if ($field['type'] == 'numeric' || $field['type'] == 'date') {
                     $expr[] = sprintf("%s:-%s", $fieldName, $value);
                 } else {
                     $expr[] = sprintf("%s:'-%s'", $fieldName, addslashes($value));
@@ -192,7 +212,7 @@ class CloudSearchSearcher extends AbstractSearcher
             return sprintf("(or %s)", implode(' ', $expr));
         }
 
-        if ($field['numeric']) {
+        if ($field['type'] == 'numeric' || $field['type'] == 'date') {
             return sprintf("(not %s:%s)", $field['field'], $value);
         }
 
@@ -203,7 +223,7 @@ class CloudSearchSearcher extends AbstractSearcher
     {
         $field = $this->getMappedField($search);
 
-        if (!$field['numeric']) {
+        if (!$field['type'] == 'numeric' || $field['type'] == 'date') {
             return;
         }
 
@@ -221,7 +241,7 @@ class CloudSearchSearcher extends AbstractSearcher
     {
         $field = $this->getMappedField($search);
 
-        if (!$field['numeric']) {
+        if (!$field['type'] == 'numeric' || $field['type'] == 'date') {
             return;
         }
 
@@ -242,22 +262,5 @@ class CloudSearchSearcher extends AbstractSearcher
             $idResults[] = $result['id'];
         }
         return $idResults;
-    }
-
-    public function getMappedField($name)
-    {
-        $mappedFields = $this->getOptions()->getFieldMappings();
-
-        if (!isset($mappedFields[$name])) {
-            throw new Exception\InvalidArgumentException("Invalid field [$name] specified");
-        }
-
-        $field = $mappedFields[$name];
-
-        if (is_array($field) && isset($field['field'])) {
-            return isset($field['numeric']) ? $field : array('field' => $field['field'], 'numeric' => false);
-        }
-
-        return array('field' => $field, 'numeric' => false);
     }
 }

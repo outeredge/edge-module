@@ -2,6 +2,9 @@
 
 namespace Edge\Search;
 
+use Zend\Stdlib\PriorityQueue;
+use Zend\Filter\FilterInterface;
+
 abstract class AbstractSearcher implements SearcherInterface
 {
     /**
@@ -15,9 +18,20 @@ abstract class AbstractSearcher implements SearcherInterface
     protected $filter;
 
     /**
-     * @var ConverterInterface
+     * @var PriorityQueue
      */
-    protected $converter;
+    protected $converters;
+
+    /**
+     * @var array|FilterInterface[]
+     */
+    protected $valuefilters = array();
+
+
+    public function __construct()
+    {
+        $this->converters = new PriorityQueue();
+    }
 
     /**
      * @return int
@@ -52,23 +66,104 @@ abstract class AbstractSearcher implements SearcherInterface
     }
 
     /**
-     * Set the converter
+     * Add a converter
      *
-     * @param ConverterInterface|null $converter
+     * @param ConverterInterface $converter
+     * @param int $priority
      */
-    public function setConverter(ConverterInterface $converter = null)
+    public function addConverter(ConverterInterface $converter, $priority = 1)
     {
-        $this->converter = $converter;
+        $this->converters->insert($converter, $priority);
         return $this;
     }
 
     /**
-     * Get the converter
+     * Get the converters
      *
-     * @return ConverterInterface|null
+     * @return PriorityQueue|ConverterInterface[]
      */
-    public function getConverter()
+    public function getConverters()
     {
-        return $this->converter;
+        return $this->converters;
     }
+
+    public function addValueFilter($field, FilterInterface $filter)
+    {
+        $this->valuefilters[$field] = $filter;
+        return $this;
+    }
+
+    public function hasValueFilter($field)
+    {
+        return array_key_exists($field, $this->valuefilters)
+               || array_key_exists('*', $this->valuefilters);
+    }
+
+    /**
+     * Get value filter for field
+     *
+     * @param  string $field
+     * @return FilterInterface
+     * @throws Exception\InvalidArgumentException
+     */
+    public function getValueFilter($field)
+    {
+        if (isset($this->valuefilters[$field])) {
+            return $this->valuefilters[$field];
+        }
+
+        if (!isset($this->valuefilters['*'])) {
+            throw new Exception\InvalidArgumentException(sprintf(
+                '%s: no value filter by name of "%s", and no wildcard strategy present',
+                __METHOD__,
+                $field
+            ));
+        }
+
+        return $this->valuefilters['*'];
+    }
+
+    public function removeValueFilter($field)
+    {
+        unset($this->valuefilters[$field]);
+        return $this;
+    }
+
+    protected function prepareValue($value, $field)
+    {
+        if ($this->hasValueFilter($field)) {
+            $value = $this->getValueFilter($field)->filter($value);
+        }
+
+        $mappedField = $this->getMappedField($field);
+        $value = $this->handleTypeConversions($value, $mappedField['type']);
+
+        return $value;
+    }
+
+    public function getMappedField($name)
+    {
+        $mappedFields = $this->getOptions()->getFieldMappings();
+
+        if (!isset($mappedFields[$name])) {
+            throw new Exception\InvalidArgumentException("Invalid field [$name] specified");
+        }
+
+        $field = $mappedFields[$name];
+
+        if (is_array($field) && isset($field['field'])) {
+            return isset($field['type']) ? $field : array('field' => $field['field'], 'type' => null);
+        }
+
+        return array('field' => $field, 'type' => null);
+    }
+
+    /**
+     * Handle conversions of strings to relevant field types
+     *
+     * @param  string  $value
+     * @param  string  $type
+     * @return mixed
+     */
+    abstract protected function handleTypeConversions($value, $type);
 }

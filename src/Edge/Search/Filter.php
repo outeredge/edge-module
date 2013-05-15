@@ -8,7 +8,6 @@
 namespace Edge\Search;
 
 use Zend\Stdlib\ArrayUtils;
-use Zend\Filter\FilterInterface;
 
 class Filter
 {
@@ -34,8 +33,6 @@ class Filter
      * @var array
      */
     protected $searchFields = array();
-
-    protected $filters = array();
 
     protected $data = array();
 
@@ -102,7 +99,7 @@ class Filter
             }
 
             $this->data[$field][] = array(
-                'value'      => $this->replaceValue($field, $value),
+                'value'      => $value,
                 'comparison' => $comparison,
                 'default'    => $default,
             );
@@ -133,7 +130,7 @@ class Filter
     {
         $this->data[$field] = array(
             array(
-                'value'      => $this->replaceValue($field, $value),
+                'value'      => $value,
                 'comparison' => $comparison,
                 'default'    => true
             )
@@ -285,64 +282,9 @@ class Filter
         return $this;
     }
 
-    protected function replaceValue($field, $value)
-    {
-        if ($this->hasValueFilter($field)) {
-            $value = $this->getValueFilter($field)->filter($value);
-        }
-        return $value;
-    }
-
     public function clear()
     {
         $this->data = array();
-        return $this;
-    }
-
-
-
-
-
-
-    public function addValueFilter($field, FilterInterface $filter)
-    {
-        $this->filters[$field] = $filter;
-        return $this;
-    }
-
-    public function hasValueFilter($field)
-    {
-        return array_key_exists($field, $this->filters)
-               || array_key_exists('*', $this->filters);
-    }
-
-    /**
-     * Get value filter for field
-     *
-     * @param string $field
-     * @return FilterInterface
-     * @throws Exception\InvalidArgumentException
-     */
-    public function getValueFilter($field)
-    {
-        if (isset($this->filters[$field])) {
-            return $this->filters[$field];
-        }
-
-        if (!isset($this->filters['*'])) {
-            throw new Exception\InvalidArgumentException(sprintf(
-                '%s: no value filter by name of "%s", and no wildcard strategy present',
-                __METHOD__,
-                $field
-            ));
-        }
-
-        return $this->filters['*'];
-    }
-
-    public function removeValueFilter($field)
-    {
-        unset($this->filters[$field]);
         return $this;
     }
 }

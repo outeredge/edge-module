@@ -2,12 +2,14 @@
 
 namespace Edge\Search;
 
+use Traversable;
+
 interface SearcherInterface
 {
     /**
      * @param $offset
      * @param $itemCountPerPage
-     * @return mixed
+     * @return array|Traversable
      */
     public function getResults($offset, $itemCountPerPage);
 
@@ -28,11 +30,12 @@ interface SearcherInterface
 
     /**
      * @param ConverterInterface $converter
+     * @param int $priority
      */
-    public function setConverter(ConverterInterface $converter);
+    public function addConverter(ConverterInterface $converter, $priority = 1);
 
     /**
-     * @return ConverterInterface
+     * @return \SplPriorityQueue|ConverterInterface[]
      */
-    public function getConverter();
+    public function getConverters();
 }

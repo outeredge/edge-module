@@ -45,6 +45,10 @@ class CloudSearchIndexer implements IndexerInterface
 
     protected function updateIndex($entities, $method)
     {
+        if (null === $this->documentEndpoint) {
+            return true;
+        }
+
         $data = array();
 
         if (!is_array($entities)) {
