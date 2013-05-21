@@ -6,6 +6,8 @@ use Zend\Stdlib\AbstractOptions;
 
 class DoctrineSearcherOptions extends AbstractOptions
 {
+    protected $__strictMode__ = false;
+
     protected $fieldMappings = array();
 
     protected $keywordFields = array();

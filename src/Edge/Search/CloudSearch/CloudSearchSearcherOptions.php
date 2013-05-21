@@ -6,6 +6,8 @@ use Zend\Stdlib\AbstractOptions;
 
 class CloudSearchSearcherOptions extends AbstractOptions
 {
+    protected $__strictMode__ = false;
+
     protected $searchEndpoint;
 
     protected $returnIdResults = true;
@@ -13,7 +15,7 @@ class CloudSearchSearcherOptions extends AbstractOptions
     protected $apiversion = '2011-02-01';
 
     protected $fieldMappings = array();
-    
+
 
     public function setFieldMappings(array $fields)
     {
