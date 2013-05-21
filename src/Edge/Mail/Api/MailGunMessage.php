@@ -64,15 +64,6 @@ class MailGunMessage extends Message
         return $this->html;
     }
 
-    public function getStrippedBody()
-    {
-        $body = $this->getStrippedBodyText();
-        if (empty($body)) {
-            $body = $this->getStrippedBodyHtml();
-        }
-        return $body;
-    }
-
     public function getStrippedBodyText()
     {
         return $this->getHeader('stripped-text');
