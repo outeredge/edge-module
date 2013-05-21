@@ -9,7 +9,7 @@ use Edge\Service\Exception\ExceptionInterface;
 class AmazonUpload extends AbstractFilter
 {
     /**
-     * @var type
+     * @var S3
      */
     protected $s3service;
 
@@ -21,10 +21,9 @@ class AmazonUpload extends AbstractFilter
         'return_metadata' => true
     );
 
-    public function __construct(array $options, S3 $service)
+    public function __construct(S3 $s3service)
     {
-        $this->s3service = $service;
-        $this->setOptions($options);
+        $this->s3service = $s3service;
     }
 
     /**
