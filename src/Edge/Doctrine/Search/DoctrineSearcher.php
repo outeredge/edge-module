@@ -81,7 +81,7 @@ class DoctrineSearcher extends AbstractSearcher
         $orXs   = $qb->expr()->orX();
         $i      = 0;
 
-        foreach ($filter->getAllFieldValues() as $fields) {
+        foreach ($filter->getAllFieldValues() as $group => $fields) {
             $andXs = $qb->expr()->andX();
 
             foreach ($fields as $field => $values) {
@@ -133,7 +133,11 @@ class DoctrineSearcher extends AbstractSearcher
                 $andXs->add($andX);
             }
 
-            $orXs->add($andXs);
+            if ($group == 0) {
+                $qb->andWhere($andXs);
+            } else {
+                $orXs->add($andXs);
+            }
         }
 
         if (count($orXs)) {

@@ -2,7 +2,6 @@
 
 namespace Edge\Search\CloudSearch;
 
-use DateTime;
 use Edge\Search\AbstractSearcher;
 use Edge\Search\Exception;
 use Edge\Search\Filter;
@@ -95,40 +94,57 @@ class CloudSearchSearcher extends AbstractSearcher
     public function createSearchQuery($offset = 0, $itemCountPerPage = 10)
     {
         $filter = $this->getFilter();
-        $params = array();
+        $ors    = array();
+        $bq     = "bq=(and ";
 
-        foreach ($filter->getAllFieldValues() as $field => $values) {
-            foreach ($values as $data) {
-                $data['value'] = $this->prepareValue($data['value'], $field);
-                switch ($data['comparison']) {
-                    case Filter::COMPARISON_EQUALS:
-                    case Filter::COMPARISON_LIKE:
-                        $params[] = $this->getEqualsExpr($field, $data['value']);
-                        break;
-                    case Filter::COMPARISON_NOT_EQUALS:
-                        $params[] = $this->getNotEqualsExpr($field, $data['value']);
-                        break;
-                    case Filter::COMPARISON_GREATER:
-                        // @todo in here we could possibly add a not for the value and a greater than or equal to for the value also?
-                    case Filter::COMPARISON_GREATER_OR_EQ:
-                        $params[] = $this->getGreaterThanOrEqualToExpr($field, $data['value']);
-                        break;
-                    case Filter::COMPARISON_LESS:
-                    case Filter::COMPARISON_LESS_OR_EQ:
-                        $params[] = $this->getLessThanOrEqualToExpr($field, $data['value']);
-                        break;
-                    default:
-                        continue;
-                        break;
+        foreach ($filter->getAllFieldValues() as $group => $fields) {
+            $params = array();
+
+            foreach ($fields as $field => $values) {
+                foreach ($values as $data) {
+                    $data['value'] = $this->prepareValue($data['value'], $field);
+                    switch ($data['comparison']) {
+                        case Filter::COMPARISON_EQUALS:
+                        case Filter::COMPARISON_LIKE:
+                            $params[] = $this->getEqualsExpr($field, $data['value']);
+                            break;
+                        case Filter::COMPARISON_NOT_EQUALS:
+                            $params[] = $this->getNotEqualsExpr($field, $data['value']);
+                            break;
+                        case Filter::COMPARISON_GREATER:
+                            // @todo in here we could possibly add a not for the value and a greater than or equal to for the value also?
+                        case Filter::COMPARISON_GREATER_OR_EQ:
+                            $params[] = $this->getGreaterThanOrEqualToExpr($field, $data['value']);
+                            break;
+                        case Filter::COMPARISON_LESS:
+                        case Filter::COMPARISON_LESS_OR_EQ:
+                            $params[] = $this->getLessThanOrEqualToExpr($field, $data['value']);
+                            break;
+                        default:
+                            continue;
+                            break;
+                    }
                 }
+            }
+
+            if ($group == 0) {
+                $bq.= implode(' ', $params);
+            } else {
+                $ors[] = $params;
             }
         }
 
         $query  = array();
 
-        if (!empty($params)) {
-            $query[] = "bq=(and " . implode(' ', $params) . ")";
+        if (!empty($ors)) {
+            foreach ($ors as $params) {
+                $bq.= " (or " . implode(' ', $params) . ")";
+            }
         }
+
+        $bq.= ")";
+
+        $query[] = $bq;
 
         if (null !== $filter->getKeywords()) {
             $query[] = 'q=' . addslashes($filter->getKeywords());
