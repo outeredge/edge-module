@@ -78,64 +78,66 @@ class DoctrineSearcher extends AbstractSearcher
     {
         $qb     = $this->getQueryBuilder();
         $filter = $this->getFilter();
-        $andXs  = array();
+        $orXs   = $qb->expr()->orX();
         $i      = 0;
 
-        foreach ($filter->getAllFieldValues() as $field => $values) {
-            if (!isset($andXs[$field])) {
-                $andXs[$field] = $qb->expr()->andX();
-            }
+        foreach ($filter->getAllFieldValues() as $fields) {
+            $andXs = $qb->expr()->andX();
 
-            $this->addJoin($field);
+            foreach ($fields as $field => $values) {
+                $this->addJoin($field);
 
-            foreach ($values as $data) {
-                $i++;
-                $param = ':param' . $i++;
-                $value = $this->prepareValue($data['value'], $field);
+                $andX = $qb->expr()->andX();
+                foreach ($values as $data) {
+                    $param       = ':param' . $i++;
+                    $value       = $this->prepareValue($data['value'], $field);
+                    $mappedField = $this->getMappedField($field);
 
-                $expr = $qb->expr()->orX();
-                $mappedField = $this->getMappedField($field);
+                    $orX = $qb->expr()->orX();
+                    foreach ((array) $mappedField['field'] as $fieldName) {
+                        switch ($data['comparison']) {
+                            case Filter::COMPARISON_EQUALS:
+                                $orX->add($this->getEqualsExpr($fieldName, $value, $param));
+                                break;
+                            case Filter::COMPARISON_LIKE:
+                                $orX->add($this->getLikeExpr($fieldName, $value, $param));
+                                break;
+                            case Filter::COMPARISON_NOT_EQUALS:
+                                $orX->add($this->getNotEqualsExpr($fieldName, $value, $param));
+                                break;
+                            case Filter::COMPARISON_GREATER:
+                                $orX->add($this->getGreaterThanExpr($fieldName, $param));
+                                break;
+                            case Filter::COMPARISON_GREATER_OR_EQ:
+                                $orX->add($this->getGreaterThanOrEqualToExpr($fieldName, $param));
+                                break;
+                            case Filter::COMPARISON_LESS:
+                                $orX->add($this->getLessThanExpr($fieldName, $param));
+                                break;
+                            case Filter::COMPARISON_LESS_OR_EQ:
+                                $orX->add($this->getLassThanOrEqualToExpr($fieldName, $param));
+                                break;
+                            default:
+                                continue;
+                                break;
+                        }
+                    }
 
-                foreach ((array) $mappedField['field'] as $fieldName) {
-                    switch ($data['comparison']) {
-                        case Filter::COMPARISON_EQUALS:
-                            $expr->add($this->getEqualsExpr($fieldName, $value, $param));
-                            break;
-                        case Filter::COMPARISON_LIKE:
-                            $expr->add($this->getLikeExpr($fieldName, $value, $param));
-                            break;
-                        case Filter::COMPARISON_NOT_EQUALS:
-                            $expr->add($this->getNotEqualsExpr($fieldName, $value, $param));
-                            break;
-                        case Filter::COMPARISON_GREATER:
-                            $expr->add($this->getGreaterThanExpr($fieldName, $param));
-                            break;
-                        case Filter::COMPARISON_GREATER_OR_EQ:
-                            $expr->add($this->getGreaterThanOrEqualToExpr($fieldName, $param));
-                            break;
-                        case Filter::COMPARISON_LESS:
-                            $expr->add($this->getLessThanExpr($fieldName, $param));
-                            break;
-                        case Filter::COMPARISON_LESS_OR_EQ:
-                            $expr->add($this->getLassThanOrEqualToExpr($fieldName, $param));
-                            break;
-                        default:
-                            continue;
-                            break;
+                    $andX->add($orX);
+
+                    if (null !== $value) {
+                        $qb->setParameter(trim($param, ':'), $value);
                     }
                 }
-                $andXs[$field]->add($expr);
 
-                if (null !== $value) {
-                    $qb->setParameter(trim($param, ':'), $value);
-                }
+                $andXs->add($andX);
             }
+
+            $orXs->add($andXs);
         }
 
-        if (count($andXs)) {
-            foreach ($andXs as $where) {
-                $qb->andWhere($where);
-            }
+        if (count($orXs)) {
+            $qb->andWhere($orXs);
         }
 
         $keywordFields = $this->getOptions()->getKeywordFields();

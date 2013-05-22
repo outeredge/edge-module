@@ -25,7 +25,8 @@ class Filter
     const COMPARISON_GREATER_OR_EQ  = '>=';
     const COMPARISON_LESS_OR_EQ     = '<=';
 
-    const QUERY_REGEX = '/([a-zA-Z-\.]+)(:|!|~|>=|>|<=|<)((?:\([^)]+?\)|[^( ]+))/';
+    const FILTER_REGEX = '/([a-zA-Z-\.]+)(:|!|~|>=|>|<=|<)((?:\[[^)]+?\]|[^\[\]\s]+))/';
+    const GROUP_REGEX  = '/(?:\(([^()]*)\))/';
 
     /**
      * Allowed search fields
@@ -45,22 +46,37 @@ class Filter
 
     protected function extract($query)
     {
-        $keywords = trim(str_replace('  ', ' ', preg_replace(self::QUERY_REGEX, '', $query)));
-        if ($keywords !== '') {
-            $this->setKeywords($keywords);
-        }
+        $groups  = array();
 
+        preg_match_all(self::GROUP_REGEX, $query, $groups);
+        $groups[1][] = preg_replace(self::GROUP_REGEX, '', $query);
+
+        foreach (array_reverse($groups[1]) as $key => $group) {
+            $this->extractQueryPart($group, $key);
+        }
+    }
+
+    protected function extractQueryPart($part, $group)
+    {
         $params = array();
-        preg_match_all(self::QUERY_REGEX, $query, $params);
+        preg_match_all(self::FILTER_REGEX, $part, $params);
+
         foreach ($params[1] as $key => $field) {
             $value = $this->processValue($params[3][$key]);
-            $this->addFieldValue($field, $value, $params[2][$key]);
+            $this->addFieldValue($field, $value, $params[2][$key], false, $group);
+        }
+
+        if ($group == 0) {
+            $keywords = trim(preg_replace(self::FILTER_REGEX, '', $part));
+            if ($keywords !== '') {
+                $this->setKeywords($keywords);
+            }
         }
     }
 
     private function processValue($value)
     {
-        $value = str_replace(array('(', ')'), '', $value);
+        $value = str_replace(array('[', ']'), '', $value);
 
         if ($value == 'null') {
             return null;
@@ -85,20 +101,21 @@ class Filter
      * @param string $value
      * @param string $comparison see class consts
      * @param boolean $default whether the value should be considered a default
-     * @return \Edge\Search\Filter
+     * @param boolean $group which OR group to apply value to [optional]
+     * @return Filter
      */
-    public function addFieldValue($field, $value, $comparison = self::COMPARISON_EQUALS, $default = false)
+    public function addFieldValue($field, $value, $comparison = self::COMPARISON_EQUALS, $default = false, $group = 0)
     {
         if ($this->hasSearchField($field)) {
-            if (isset($this->data[$field]) && !$default) {
-                foreach ($this->data[$field] as $key => $values) {
+            if (isset($this->data[$group][$field]) && !$default) {
+                foreach ($this->data[$group][$field] as $key => $values) {
                     if ($values['default']) {
-                        unset($this->data[$field][$key]);
+                        unset($this->data[$group][$field][$key]);
                     }
                 }
             }
 
-            $this->data[$field][] = array(
+            $this->data[$group][$field][] = array(
                 'value'      => $value,
                 'comparison' => $comparison,
                 'default'    => $default,
@@ -126,19 +143,9 @@ class Filter
         return $this;
     }
 
-    public function addStaticFieldValue($field, $value, $comparison = self::COMPARISON_EQUALS)
-    {
-        $this->data[$field] = array(
-            array(
-                'value'      => $value,
-                'comparison' => $comparison,
-                'default'    => true
-            )
-        );
-    }
-
     /**
-     * Get all field values, each field contains an array of values
+     * Get all field values, wrapped into groups.
+     * Each field contains an array of values
      *
      * @return array
      */
@@ -150,13 +157,14 @@ class Filter
     /**
      * Get an array of values for a specific field
      *
-     * @param  string $field
+     * @param string $field
+     * @param int    $group
      * @return array
      */
-    public function getFieldValues($field)
+    public function getFieldValues($field, $group = 0)
     {
-        if (isset($this->data[$field])) {
-            return $this->data[$field];
+        if (isset($this->data[$group][$field])) {
+            return $this->data[$group][$field];
         }
         return array();
     }
@@ -176,6 +184,8 @@ class Filter
     /**
      * Get the resulting query string
      *
+     * @todo handle all use cases, including square brackets
+     *
      * @return string
      */
     public function getQueryString()
@@ -186,10 +196,17 @@ class Filter
             return $this->getKeywords();
         }
 
-        foreach ($this->data as $field => $values) {
-            foreach ($values as $value) {
-                $filterStr.= $field . $value['comparison'] . $value['value'] . ' ';
+        foreach ($this->data as $group => $fields) {
+            $groupStr = '';
+            foreach ($fields as $field => $values) {
+                foreach ($values as $value) {
+                    $groupStr.= $field . $value['comparison'] . $value['value'] . ' ';
+                }
             }
+            if ($group > 0) {
+                $groupStr = '('.trim($groupStr).')';
+            }
+            $filterStr.= $groupStr;
         }
 
         if (null !== $this->sort) {
