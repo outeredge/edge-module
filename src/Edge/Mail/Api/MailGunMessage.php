@@ -94,7 +94,9 @@ class MailGunMessage extends Message
 
         $i = 1;
         while ($i <= $this->getHeader('attachment-count')) {
-            $attachments[] = $this->getHeader('attachment-'.$i);
+            if ($this->hasHeader('attachment-'.$i)) {
+                $attachments[] = $this->getHeader('attachment-'.$i);
+            }
             $i++;
         }
 
