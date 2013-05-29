@@ -6,8 +6,10 @@ use Edge\Exception\DomainException;
 
 class EntityNotFoundException extends DomainException implements ExceptionInterface
 {
+    protected $code = 404;
+
     public function __construct()
     {
-        parent::__construct('Entity was not found.');
+        parent::__construct('Resource not found');
     }
 }

@@ -6,7 +6,6 @@ use Edge\Exception;
 use Edge\Service\Exception as ServiceException;
 use PhlyRestfully\ApiProblem;
 use Zend\Mvc\Controller\AbstractRestfulController as ZendRestfulController;
-use Zend\Mvc\MvcEvent;
 use Zend\Paginator\Paginator;
 use Zend\Stdlib\ArrayUtils;
 use Zend\Http\Response;
@@ -14,49 +13,6 @@ use Zend\View\Model\JsonModel;
 
 abstract class AbstractRestfulController extends ZendRestfulController
 {
-    public function onDispatch(MvcEvent $e)
-    {
-        // Check for an API-Problem in the event, prevents futher dispatch
-        $return = $e->getParam('api-problem', false);
-
-        if (!$return) {
-            try {
-                $return = parent::onDispatch($e);
-            } catch (ServiceException\ExceptionInterface $ex) {
-                $return = $this->handleServiceException($ex);
-                $e->setResult($return);
-            }
-        }
-
-        return $return;
-    }
-
-    protected function handleServiceException(ServiceException\ExceptionInterface $ex)
-    {
-        if ($ex instanceof ServiceException\EntityErrorsException) {
-            $code   = $ex->getCode() ?: 500;
-            $return = $this->prepareProblemJsonModel(new ApiProblem($code, $ex->getMessage(), null, null, array('errors' => $ex->getErrors())));
-        } elseif ($ex instanceof ServiceException\EntityNotFoundException) {
-            $return = $this->prepareProblemJsonModel(new ApiProblem(404, 'Resource not found'));
-        } else {
-            throw $ex;
-        }
-
-        return $return;
-    }
-
-    /**
-     * Create an api-problem JsonModel
-     *
-     * @param \PhlyRestfully\ApiProblem $problem
-     * @return \Zend\View\Model\JsonModel
-     */
-    protected function prepareProblemJsonModel(ApiProblem $problem)
-    {
-        $jsonModel = new JsonModel(array('api-problem' => $problem));
-        return $jsonModel;
-    }
-
     /**
      * Prepare a paginator from page and limit query strings
      *

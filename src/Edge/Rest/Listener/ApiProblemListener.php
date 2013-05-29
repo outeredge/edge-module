@@ -60,9 +60,7 @@ class ApiProblemListener implements ListenerAggregateInterface
             return;
         }
 
-        $httpStatus = $e->getResponse()->getStatusCode();
         $exception  = $model->getVariable('exception');
-
         if (!$exception instanceof \Exception) {
             return;
         }
@@ -80,6 +78,8 @@ class ApiProblemListener implements ListenerAggregateInterface
         if ($match->getTypeString() != 'application/json') {
             return;
         }
+
+        $httpStatus = $exception->getCode() ?: 500;
 
         // Create a new model with the API-Problem,
         // reset the result and view model in the event
