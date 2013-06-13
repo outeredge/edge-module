@@ -25,7 +25,7 @@ class DoctrineSearcher extends AbstractSearcher
     /**
      * @var array
      */
-    protected $joins;
+    protected $joins = array();
 
     /**
      * Set options
@@ -85,8 +85,6 @@ class DoctrineSearcher extends AbstractSearcher
             $andXs = $qb->expr()->andX();
 
             foreach ($fields as $field => $values) {
-                $this->addJoin($field);
-
                 $andX = $qb->expr()->andX();
                 foreach ($values as $data) {
                     $param       = ':param' . $i++;
@@ -121,6 +119,8 @@ class DoctrineSearcher extends AbstractSearcher
                                 continue;
                                 break;
                         }
+
+                        $this->addJoin($fieldName);
                     }
 
                     $andX->add($orX);
@@ -147,8 +147,8 @@ class DoctrineSearcher extends AbstractSearcher
         $keywordFields = $this->getOptions()->getKeywordFields();
         if (!empty($keywordFields) && null !== $filter->getKeywords()) {
             $orX = $qb->expr()->orX();
-            foreach ($keywordFields as $name => $field) {
-                $this->addJoin($name);
+            foreach ($keywordFields as $field) {
+                $this->addJoin($field);
                 $orX->add($qb->expr()->like($field,  ':keyword'));
             }
             $qb->andWhere($orX);
@@ -156,8 +156,8 @@ class DoctrineSearcher extends AbstractSearcher
         }
 
         if (null !== $filter->getSortField()) {
-            $this->addJoin($filter->getSortField());
             $mappedSortField = $this->getMappedField($filter->getSortField());
+            $this->addJoin($mappedSortField['field']);
             $qb->orderBy($mappedSortField['field'], $filter->getSortOrder());
         }
 
@@ -208,27 +208,27 @@ class DoctrineSearcher extends AbstractSearcher
      */
     protected function addJoin($field)
     {
-        if (!substr_count($field, '.')) {
+        $qb       = $this->getQueryBuilder();
+        $joinName = strstr($field, '.', true);
+
+        if ($joinName == $qb->getRootAlias()) {
             return;
         }
 
-        $joinName   = strstr($field, '.', true);
         $joinTables = $this->getOptions()->getJoinTables();
 
         if (isset($this->joins[$joinName]) || !isset($joinTables[$joinName])) {
             return;
         }
 
-        $qb = $this->getQueryBuilder();
-
-        if (is_array($joinTables[$joinName])) {
-            $qb->leftJoin(
-                $qb->getRootAlias() . '.' . $joinTables[$joinName]['property'],
-                $joinTables[$joinName]['alias']
-            );
+        if (substr_count($joinTables[$joinName], '.')) {
+            $this->addJoin($joinTables[$joinName]);
+            $alias = $joinTables[$joinName];
         } else {
-            $qb->leftJoin($qb->getRootAlias() . '.' . $joinName, $joinTables[$joinName]);
+            $alias = $qb->getRootAlias() . '.' . $joinTables[$joinName];
         }
+
+        $qb->leftJoin($alias, $joinName);
 
         $this->joins[$joinName] = true;
     }
