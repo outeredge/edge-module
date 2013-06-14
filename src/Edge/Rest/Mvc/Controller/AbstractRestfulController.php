@@ -74,7 +74,8 @@ abstract class AbstractRestfulController extends ZendRestfulController
                         break;
                 }
             } catch (ServiceException\ExceptionInterface $ex) {
-                $result = $this->handleServiceException($ex); //todo this won't work
+                $httpStatus = $ex->getCode() ?: 500;
+                $result = new JsonModel(array('api-problem' => new ApiProblem($httpStatus, $ex)));
             }
 
             if (!$result instanceof JsonModel && !$result instanceof Response) {
