@@ -242,7 +242,7 @@ class DoctrineSearcher extends AbstractSearcher
      */
     protected function getLikeExpr($field, &$value, $paramName)
     {
-        if (null === $value || is_array($value)) {
+        if (null === $value) {
             return $this->getEqualsExpr($field, $value, $paramName);
         }
 
@@ -266,17 +266,6 @@ class DoctrineSearcher extends AbstractSearcher
             return $expr->isNull($field);
         }
 
-        if (is_array($value)) {
-            if (in_array(null, $value)) {
-                return $expr->orX(
-                    $expr->isNull($field),
-                    $expr->in($field, $paramName)
-                );
-            } else {
-                return $expr->in($field, $paramName);
-            }
-        }
-
         return $expr->eq($field, $paramName);
     }
 
@@ -293,16 +282,6 @@ class DoctrineSearcher extends AbstractSearcher
 
         if (null === $value) {
             return $expr->isNotNull($field);
-        }
-
-        if (is_array($value)) {
-            if (in_array(null, $value)) {
-                return $expr()->orX(
-                    $expr->isNotNull($field),
-                    $expr->notIn($field, $paramName)
-                );
-            }
-            return $expr->notIn($field, $paramName);
         }
 
         return $expr->neq($field, $paramName);

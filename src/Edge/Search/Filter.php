@@ -82,15 +82,6 @@ class Filter
             return null;
         }
 
-        if (strstr($value, ',')) {
-            $value = explode(',', $value);
-            foreach ($value as $key => &$val) {
-                if ($val == 'null') {
-                    $val = null;
-                }
-            }
-        }
-
         return $value;
     }
 
