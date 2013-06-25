@@ -3,6 +3,7 @@
 namespace Edge\Entity;
 
 use ArrayAccess;
+use BadMethodCallException;
 
 abstract class AbstractEntity implements ArrayAccess
 {
