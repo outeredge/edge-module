@@ -127,6 +127,7 @@ abstract class AbstractRestfulController extends ZendRestfulController
                     $this->getResponse()->setStatusCode(Response::STATUS_CODE_201);
                     break;
                 case 'PUT':
+                case 'PATCH':
                     $this->getResponse()->setStatusCode(Response::STATUS_CODE_200);
                     break;
                 case 'DELETE':
