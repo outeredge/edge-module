@@ -65,6 +65,10 @@ abstract class AbstractRestfulController extends ZendRestfulController
                         $id = isset($entityArray[$entityIdentifier]) ? $entityArray[$entityIdentifier] : null;
                         $result = $this->update($id, array($entityName => $entityArray));
                         break;
+                    case 'PATCH':
+                        $id = isset($entityArray[$entityIdentifier]) ? $entityArray[$entityIdentifier] : null;
+                        $result = $this->patch($id, array($entityName => $entityArray));
+                        break;
                     case 'DELETE':
                         $id = isset($entityArray[$entityIdentifier]) ? $entityArray[$entityIdentifier] : null;
                         $result = $this->delete($id);
