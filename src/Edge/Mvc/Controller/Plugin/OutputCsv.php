@@ -2,6 +2,7 @@
 
 namespace Edge\Mvc\Controller\Plugin;
 
+use Edge\Exception;
 use Zend\Mvc\Controller\Plugin\AbstractPlugin;
 
 class OutputCsv extends AbstractPlugin
@@ -16,6 +17,10 @@ class OutputCsv extends AbstractPlugin
      */
     public function __invoke(array $data, $filename)
     {
+        if (empty($data)) {
+            throw new Exception\RuntimeException('No data found for CSV output');
+        }
+
         $filename = rawurlencode($filename);
 
         header("Cache-Control: must-revalidate, post-check=0, pre-check=0");
