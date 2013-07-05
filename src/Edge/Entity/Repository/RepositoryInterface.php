@@ -6,7 +6,7 @@ use Edge\Entity\AbstractEntity;
 
 interface RepositoryInterface
 {
-    public function save(AbstractEntity $entity);
+    public function save(AbstractEntity $entity = null);
 
     public function update(AbstractEntity $entity);
 

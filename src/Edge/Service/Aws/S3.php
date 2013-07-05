@@ -80,6 +80,36 @@ class S3
     }
 
     /**
+     * Get full meta-data for object
+     *
+     * @param  string $file
+     * @throws Aws\S3\Exception\S3Exception when object does not exist
+     * @return array
+     */
+    public function getFileInfo($file)
+    {
+        $headers = $this->getS3Client()->headObject(array(
+            'Bucket' => $this->bucket,
+            'Key'    => $file,
+        ));
+
+        return $headers->toArray();
+    }
+
+    /**
+     * Get file size of object
+     *
+     * @param string $file
+     * @return int
+     * @throws Aws\S3\Exception\S3Exception when object does not exist
+     */
+    public function getFileSize($file)
+    {
+        $info = $this->getFileInfo($file);
+        return (int) $info['ContentLength'];
+    }
+
+    /**
      * Get HTTPS download path for file
      *
      * @param string $path     path on remote server
