@@ -5,6 +5,7 @@ namespace Edge\Doctrine\Search;
 use ArrayIterator;
 use DateTime;
 use Doctrine\ORM\QueryBuilder;
+use Doctrine\DBAL\DBALException;
 use Edge\Search\AbstractSearcher;
 use Edge\Search\Exception;
 use Edge\Search\Filter;
@@ -173,7 +174,13 @@ class DoctrineSearcher extends AbstractSearcher
             return new ArrayIterator(array());
         }
 
-        $results = $paginator->getIterator();
+        try {
+            $results = $paginator->getIterator();
+        } catch (DBALException $ex) {
+            $paginator->setUseOutputWalkers(true);
+            $results = $paginator->getIterator();
+        }
+
 
         foreach ($this->getConverters() as $converter) {
             $results = $converter->convert($results);
