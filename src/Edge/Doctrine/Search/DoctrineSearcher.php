@@ -78,6 +78,7 @@ class DoctrineSearcher extends AbstractSearcher
     public function getResults($offset, $itemCountPerPage)
     {
         $qb     = $this->getQueryBuilder();
+
         $filter = $this->getFilter();
         $orXs   = $qb->expr()->orX();
         $i      = 0;
@@ -94,6 +95,10 @@ class DoctrineSearcher extends AbstractSearcher
 
                     $orX = $qb->expr()->orX();
                     foreach ((array) $mappedField['field'] as $fieldName) {
+                        if($group !== 0) {
+                            $fieldName = str_replace('.', $group.'.', $fieldName);
+                        }
+
                         switch ($data['comparison']) {
                             case Filter::COMPARISON_EQUALS:
                                 $orX->add($this->getEqualsExpr($fieldName, $value, $param));
@@ -121,7 +126,7 @@ class DoctrineSearcher extends AbstractSearcher
                                 break;
                         }
 
-                        $this->addJoin($fieldName);
+                        $this->addJoin($fieldName, $group);
                     }
 
                     $andX->add($orX);
@@ -149,7 +154,7 @@ class DoctrineSearcher extends AbstractSearcher
         if (!empty($keywordFields) && null !== $filter->getKeywords()) {
             $orX = $qb->expr()->orX();
             foreach ($keywordFields as $field) {
-                $this->addJoin($field);
+                $this->addJoin($field, $group);
                 $orX->add($qb->expr()->like($field,  ':keyword'));
             }
             $qb->andWhere($orX);
@@ -158,7 +163,7 @@ class DoctrineSearcher extends AbstractSearcher
 
         if (null !== $filter->getSortField()) {
             $mappedSortField = $this->getMappedField($filter->getSortField());
-            $this->addJoin($mappedSortField['field']);
+            $this->addJoin($mappedSortField['field'], $group);
             $qb->orderBy($mappedSortField['field'], $filter->getSortOrder());
         }
 
@@ -213,23 +218,27 @@ class DoctrineSearcher extends AbstractSearcher
      *
      * @param string $field
      */
-    protected function addJoin($field)
+    protected function addJoin($field, $group = 0)
     {
-        $qb       = $this->getQueryBuilder();
-        $joinName = strstr($field, '.', true);
+        $qb         = $this->getQueryBuilder();
+
+        $joinTables = $this->getOptions()->getJoinTables();
+        $joinName   = strstr($field, '.', true);
 
         if ($joinName == $qb->getRootAlias()) {
             return;
         }
 
-        $joinTables = $this->getOptions()->getJoinTables();
+        if($group !== 0) {
+            $joinTables[$joinName] = $joinTables[str_replace($group,'',$joinName)];
+        }
 
         if (isset($this->joins[$joinName]) || !isset($joinTables[$joinName])) {
             return;
         }
 
         if (substr_count($joinTables[$joinName], '.')) {
-            $this->addJoin($joinTables[$joinName]);
+            $this->addJoin($joinTables[$joinName], $group);
             $alias = $joinTables[$joinName];
         } else {
             $alias = $qb->getRootAlias() . '.' . $joinTables[$joinName];
