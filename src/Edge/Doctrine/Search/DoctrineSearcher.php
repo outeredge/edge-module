@@ -14,6 +14,9 @@ use Doctrine\ORM\Tools\Pagination\Paginator as DoctrinePaginator;
 
 class DoctrineSearcher extends AbstractSearcher
 {
+    const FIELD_TYPE_BOOLEAN = 'bool';
+    const FIELD_TYPE_DATE    = 'date';
+
     /**
      * @var DoctrineSearcherOptions
      */
@@ -104,7 +107,7 @@ class DoctrineSearcher extends AbstractSearcher
                         $this->addJoin($fieldName, $group);
 
                         if (!isset($this->conditionalFields[$fieldName])) {
-                            $orX->add($this->getExpression($fieldName, $data['comparison'], $value, $param));
+                            $orX->add($this->getExpression($fieldName, $data['comparison'], $value, $param, $mappedField['type']));
                         } else {
                             $value = null;
                         }
@@ -183,17 +186,17 @@ class DoctrineSearcher extends AbstractSearcher
      * @param string $param
      * @throws Exception\InvalidArgumentException
      */
-    protected function getExpression($field, $operator, &$value, $param)
+    protected function getExpression($field, $operator, &$value, $param, $type = null)
     {
         switch ($operator) {
             case Filter::COMPARISON_EQUALS:
-                return $this->getEqualsExpr($field, $value, $param);
+                return $this->getEqualsExpr($field, $value, $param, $type);
+                break;
+            case Filter::COMPARISON_NOT_EQUALS:
+                return $this->getNotEqualsExpr($field, $value, $param, $type);
                 break;
             case Filter::COMPARISON_LIKE:
                 return $this->getLikeExpr($field, $value, $param);
-                break;
-            case Filter::COMPARISON_NOT_EQUALS:
-                return $this->getNotEqualsExpr($field, $value, $param);
                 break;
             case Filter::COMPARISON_GREATER:
                 return $this->getGreaterThanExpr($field, $param);
@@ -300,12 +303,19 @@ class DoctrineSearcher extends AbstractSearcher
      * @param mixed   $value search value
      * @param string  $paramName parameter name to use
      */
-    protected function getEqualsExpr($field, $value, $paramName)
+    protected function getEqualsExpr($field, $value, $paramName, $type = null)
     {
         $expr  = $this->getQueryBuilder()->expr();
 
         if (null === $value) {
             return $expr->isNull($field);
+        }
+
+        if ($type == self::FIELD_TYPE_BOOLEAN && $value == 0) {
+            return $expr->orX(
+                $expr->eq($field, $paramName),
+                $expr->isNull($field)
+            );
         }
 
         return $expr->eq($field, $paramName);
@@ -318,7 +328,7 @@ class DoctrineSearcher extends AbstractSearcher
      * @param mixed   $value search value
      * @param string  $paramName parameter name to use
      */
-    protected function getNotEqualsExpr($field, $value, $paramName)
+    protected function getNotEqualsExpr($field, $value, $paramName, $type = null)
     {
         $expr  = $this->getQueryBuilder()->expr();
 
