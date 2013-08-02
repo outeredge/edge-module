@@ -141,6 +141,13 @@ abstract class AbstractSearcher implements SearcherInterface
         return $value;
     }
 
+    /**
+     * Get mapped field
+     * 
+     * @param  string $name
+     * @return array
+     * @throws Exception\InvalidArgumentException
+     */
     public function getMappedField($name)
     {
         $mappedFields = $this->getOptions()->getFieldMappings();

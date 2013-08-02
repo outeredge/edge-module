@@ -6,6 +6,7 @@ use ArrayIterator;
 use DateTime;
 use Doctrine\ORM\QueryBuilder;
 use Doctrine\DBAL\DBALException;
+use Doctrine\ORM\Query\Expr\Join;
 use Edge\Search\AbstractSearcher;
 use Edge\Search\Exception;
 use Edge\Search\Filter;
@@ -27,6 +28,11 @@ class DoctrineSearcher extends AbstractSearcher
      * @var array
      */
     protected $joins = array();
+
+    /**
+     * @var array
+     */
+    protected $conditionalFields = array();
 
     /**
      * Set options
@@ -92,41 +98,16 @@ class DoctrineSearcher extends AbstractSearcher
                     $param       = ':param' . $i++;
                     $value       = $this->prepareValue($data['value'], $field);
                     $mappedField = $this->getMappedField($field);
+                    $orX         = $qb->expr()->orX();
 
-                    $orX = $qb->expr()->orX();
                     foreach ((array) $mappedField['field'] as $fieldName) {
-                        if($group !== 0) {
-                            $fieldName = str_replace('.', $group.'.', $fieldName);
-                        }
-
-                        switch ($data['comparison']) {
-                            case Filter::COMPARISON_EQUALS:
-                                $orX->add($this->getEqualsExpr($fieldName, $value, $param));
-                                break;
-                            case Filter::COMPARISON_LIKE:
-                                $orX->add($this->getLikeExpr($fieldName, $value, $param));
-                                break;
-                            case Filter::COMPARISON_NOT_EQUALS:
-                                $orX->add($this->getNotEqualsExpr($fieldName, $value, $param));
-                                break;
-                            case Filter::COMPARISON_GREATER:
-                                $orX->add($this->getGreaterThanExpr($fieldName, $param));
-                                break;
-                            case Filter::COMPARISON_GREATER_OR_EQ:
-                                $orX->add($this->getGreaterThanOrEqualToExpr($fieldName, $param));
-                                break;
-                            case Filter::COMPARISON_LESS:
-                                $orX->add($this->getLessThanExpr($fieldName, $param));
-                                break;
-                            case Filter::COMPARISON_LESS_OR_EQ:
-                                $orX->add($this->getLassThanOrEqualToExpr($fieldName, $param));
-                                break;
-                            default:
-                                continue;
-                                break;
-                        }
-
                         $this->addJoin($fieldName, $group);
+
+                        if (!isset($this->conditionalFields[$fieldName])) {
+                            $orX->add($this->getExpression($fieldName, $data['comparison'], $value, $param));
+                        } else {
+                            $value = null;
+                        }
                     }
 
                     $andX->add($orX);
@@ -163,7 +144,7 @@ class DoctrineSearcher extends AbstractSearcher
 
         if (null !== $filter->getSortField()) {
             $mappedSortField = $this->getMappedField($filter->getSortField());
-            $this->addJoin($mappedSortField['field'], $group);
+            $this->addJoin($mappedSortField['field']);
             $qb->orderBy($mappedSortField['field'], $filter->getSortOrder());
         }
 
@@ -186,12 +167,50 @@ class DoctrineSearcher extends AbstractSearcher
             $results = $paginator->getIterator();
         }
 
-
         foreach ($this->getConverters() as $converter) {
             $results = $converter->convert($results);
         }
 
         return $results;
+    }
+
+    /**
+     * Get expression object for field
+     *
+     * @param string $field
+     * @param string $operator
+     * @param mixed  $value
+     * @param string $param
+     * @throws Exception\InvalidArgumentException
+     */
+    protected function getExpression($field, $operator, &$value, $param)
+    {
+        switch ($operator) {
+            case Filter::COMPARISON_EQUALS:
+                return $this->getEqualsExpr($field, $value, $param);
+                break;
+            case Filter::COMPARISON_LIKE:
+                return $this->getLikeExpr($field, $value, $param);
+                break;
+            case Filter::COMPARISON_NOT_EQUALS:
+                return $this->getNotEqualsExpr($field, $value, $param);
+                break;
+            case Filter::COMPARISON_GREATER:
+                return $this->getGreaterThanExpr($field, $param);
+                break;
+            case Filter::COMPARISON_GREATER_OR_EQ:
+                return $this->getGreaterThanOrEqualToExpr($field, $param);
+                break;
+            case Filter::COMPARISON_LESS:
+                return $this->getLessThanExpr($field, $param);
+                break;
+            case Filter::COMPARISON_LESS_OR_EQ:
+                return $this->getLassThanOrEqualToExpr($field, $param);
+                break;
+            default:
+                throw new Exception\InvalidArgumentException('Invalid operator specified');
+                break;
+        }
     }
 
     /**
@@ -217,54 +236,61 @@ class DoctrineSearcher extends AbstractSearcher
      * Selectively add a join onto the qb
      *
      * @param string $field
+     * @param int $group
      */
-    protected function addJoin($field, $group = 0)
+    protected function addJoin(&$field, $group = 0)
     {
-        $qb         = $this->getQueryBuilder();
+        $qb = $this->getQueryBuilder();
 
         $joinTables = $this->getOptions()->getJoinTables();
-        $joinName   = strstr($field, '.', true);
+        $joinAlias  = strstr($field, '.', true);
 
-        if ($joinName == $qb->getRootAlias()) {
+        if ($joinAlias == $qb->getRootAlias()) {
             return;
         }
 
-        if($group !== 0) {
-            $joinTables[$joinName] = $joinTables[str_replace($group,'',$joinName)];
-        }
-
-        if (isset($this->joins[$joinName]) || !isset($joinTables[$joinName])) {
-            return;
-        }
-
-        if (substr_count($joinTables[$joinName], '.')) {
-            $this->addJoin($joinTables[$joinName], $group);
-            $alias = $joinTables[$joinName];
+        if($group != 0) {
+            $groupAlias = $joinAlias . $group;
+            $field = str_replace($joinAlias . '.', $groupAlias . '.', $field);
         } else {
-            $alias = $qb->getRootAlias() . '.' . $joinTables[$joinName];
+            $groupAlias = $joinAlias;
         }
 
-        $qb->leftJoin($alias, $joinName);
-
-        $this->joins[$joinName] = true;
-    }
-
-    /**
-     * Get a like expression for specified field and data
-     *
-     * @param string  $field field name
-     * @param mixed   $value search value
-     * @param string  $paramName parameter name to use
-     */
-    protected function getLikeExpr($field, &$value, $paramName)
-    {
-        if (null === $value) {
-            return $this->getEqualsExpr($field, $value, $paramName);
+        if (isset($this->joins[$groupAlias])) {
+            return;
         }
 
-        $value = '%' . $value . '%';
+        $joinTable  = $joinTables[$joinAlias];
 
-        return $this->getQueryBuilder()->expr()->like($field, $paramName);
+        if (substr_count($joinTable, '.')) {
+            $this->addJoin($joinTable, $group);
+            $qb->leftJoin($joinTable, $groupAlias);
+        } else {
+            // check if join should be conditional
+            $joinCondition    = null;
+            $joinConditionals = $this->getOptions()->getJoinConditionals();
+            if (isset($joinConditionals[$joinAlias])) {
+                $conditionValues = $this->getFilter()->getFieldValues($joinConditionals[$joinAlias], $group);
+                if (!empty($conditionValues)) {
+                    if (count($conditionValues) > 1) {
+                        throw new Exception\InvalidArgumentException('Too many conditions for join');
+                    }
+
+                    $joinCondition = $this->getExpression(
+                        $field,
+                        $conditionValues[0]['comparison'],
+                        $conditionValues[0]['value'],
+                        $conditionValues[0]['value']
+                    );
+
+                    $this->conditionalFields[$field] = true;
+                }
+            }
+
+            $qb->leftJoin($qb->getRootAlias() . '.' . $joinTable, $groupAlias, Join::WITH, $joinCondition);
+        }
+
+        $this->joins[$groupAlias] = true;
     }
 
     /**
@@ -301,6 +327,24 @@ class DoctrineSearcher extends AbstractSearcher
         }
 
         return $expr->neq($field, $paramName);
+    }
+
+    /**
+     * Get a like expression for specified field and data
+     *
+     * @param string  $field field name
+     * @param mixed   $value search value
+     * @param string  $paramName parameter name to use
+     */
+    protected function getLikeExpr($field, &$value, $paramName)
+    {
+        if (null === $value) {
+            return $this->getEqualsExpr($field, $value, $paramName);
+        }
+
+        $value = '%' . $value . '%';
+
+        return $this->getQueryBuilder()->expr()->like($field, $paramName);
     }
 
     protected function getGreaterThanExpr($field, $paramName)

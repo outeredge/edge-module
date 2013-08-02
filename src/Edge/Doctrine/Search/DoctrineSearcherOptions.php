@@ -14,6 +14,8 @@ class DoctrineSearcherOptions extends AbstractOptions
 
     protected $joinTables = array();
 
+    protected $joinConditionals = array();
+
     public function setFieldMappings(array $fields)
     {
         $this->fieldMappings = $fields;
@@ -54,5 +56,19 @@ class DoctrineSearcherOptions extends AbstractOptions
     public function getJoinTables()
     {
         return $this->joinTables;
+    }
+
+    public function setJoinConditionals(array $joins)
+    {
+        $this->joinConditionals = $joins;
+        return $this;
+    }
+
+    /**
+     * @return array
+     */
+    public function getJoinConditionals()
+    {
+        return $this->joinConditionals;
     }
 }
