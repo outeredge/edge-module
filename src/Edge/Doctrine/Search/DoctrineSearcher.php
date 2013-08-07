@@ -138,7 +138,7 @@ class DoctrineSearcher extends AbstractSearcher
         if (!empty($keywordFields) && null !== $filter->getKeywords()) {
             $orX = $qb->expr()->orX();
             foreach ($keywordFields as $field) {
-                $this->addJoin($field, $group);
+                $this->addJoin($field);
                 $orX->add($qb->expr()->like($field,  ':keyword'));
             }
             $qb->andWhere($orX);
