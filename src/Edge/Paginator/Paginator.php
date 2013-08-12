@@ -9,20 +9,23 @@ class Paginator extends ZendPaginator
     /**
      * Convert current page to array
      *
-     * @param string $key array key for entities
-     * @param mixed  $params to pass to the toArray() function of each entity
+     * @param string $key [optional] array key for entities
      * @return array
      */
-    public function toArray($key)
+    public function toArray($key = null)
     {
         // Get the current items first as count may be retrieved in one call
-        $currentItems = $this->getCurrentItems();
+        $currentItems = iterator_to_array($this->getCurrentItems());
+
+        if (null === $key) {
+            return $currentItems;
+        }
 
         $results = array(
             'pages'   => $this->count(),
             'current' => $this->getCurrentPageNumber(),
             'count'   => $this->getTotalItemCount(),
-            $key      => iterator_to_array($currentItems)
+            $key      => $currentItems
         );
 
         return $results;
