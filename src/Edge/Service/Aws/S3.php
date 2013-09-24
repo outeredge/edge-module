@@ -133,11 +133,22 @@ class S3
     }
 
     /**
+     * Register stream wrapper (s3://)
+     *
+     * @return self
+     */
+    public function registerStreamWrapper()
+    {
+        $this->getS3Client()->registerStreamWrapper();
+        return $this;
+    }
+
+    /**
      * Get Amazon S3 client service
      *
      * @return S3Client
      */
-    protected function getS3Client()
+    public function getS3Client()
     {
         return $this->s3client;
     }
