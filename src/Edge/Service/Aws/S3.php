@@ -133,14 +133,17 @@ class S3
     }
 
     /**
-     * Register stream wrapper (s3://)
+     * Get stream handle for file
      *
-     * @return self
+     * @param string $file
+     * @param string $mode
+     * @return resource
      */
-    public function registerStreamWrapper()
+    public function getStreamHandle($file, $mode = 'r')
     {
         $this->getS3Client()->registerStreamWrapper();
-        return $this;
+
+        return fopen('s3://' . $this->bucket . '/' . $file, $mode);
     }
 
     /**
