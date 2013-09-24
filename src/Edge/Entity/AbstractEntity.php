@@ -31,11 +31,4 @@ abstract class AbstractEntity implements ArrayAccess
     {
         throw new BadMethodCallException("Array access of class " . get_class($this) . " is read-only!");
     }
-
-    /**
-     * Get an array representation of the entity
-     * @todo
-     * @return array
-     */
-    //abstract public function toArray();
 }

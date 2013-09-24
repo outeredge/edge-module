@@ -38,6 +38,11 @@ class DoctrineSearcher extends AbstractSearcher
     protected $conditionalFields = array();
 
     /**
+     * @var boolean
+     */
+    protected $hasResults = false;
+
+    /**
      * Set options
      *
      * @param DoctrineSearcherOptions|array $options
@@ -87,10 +92,13 @@ class DoctrineSearcher extends AbstractSearcher
     public function getResults($offset, $itemCountPerPage)
     {
         $qb     = $this->getQueryBuilder();
-
         $filter = $this->getFilter();
         $orXs   = $qb->expr()->orX();
         $i      = 0;
+
+        if ($this->hasResults) {
+            $qb->getEntityManager()->clear();
+        }
 
         foreach ($filter->getAllFieldValues() as $group => $fields) {
             $andXs = $qb->expr()->andX();
@@ -173,6 +181,8 @@ class DoctrineSearcher extends AbstractSearcher
         foreach ($this->getConverters() as $converter) {
             $results = $converter->convert($results);
         }
+
+        $this->hasResults = true;
 
         return $results;
     }
