@@ -87,6 +87,10 @@ class DoctrineSearcher extends AbstractSearcher
     }
 
     /**
+     * Get all results from offset
+     *
+     * NOTE: Looping pages in a single request will force the ENTIRE EntityManager to be cleared for memory saving purposes
+     *
      * @return ArrayIterator
      */
     public function getResults($offset, $itemCountPerPage)
