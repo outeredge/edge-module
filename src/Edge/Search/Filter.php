@@ -46,6 +46,10 @@ class Filter
 
     protected function extract($query)
     {
+        if (empty($query)) {
+            return $this;
+        }
+
         $groups  = array();
 
         preg_match_all(self::GROUP_REGEX, $query, $groups);
@@ -54,6 +58,8 @@ class Filter
         foreach (array_reverse($groups[1]) as $key => $group) {
             $this->extractQueryPart($group, $key);
         }
+        
+        return $this;
     }
 
     protected function extractQueryPart($part, $group)

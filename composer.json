@@ -19,7 +19,8 @@
     },
     "suggest": {
         "phly/phly-restfully": "PhlyRestfully for Restful API features",
-        "michelf/php-markdown": "v1.3 for Markdown parsers"
+        "michelf/php-markdown": "v1.3 for Markdown parsers",
+        "jms/serializer": "JMS Serializer for serialization utility"
     },
     "autoload": {
         "psr-0": {

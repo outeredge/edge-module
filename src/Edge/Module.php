@@ -8,6 +8,7 @@ class Module
     {
         return array(
             'factories' => array(
+                'Edge\Serializer\Serializer' => 'Edge\Serializer\SerializerFactory',
                 'Edge\Rest\JsonRenderer' => function ($services) {
                     $config  = $services->get('Config');
 

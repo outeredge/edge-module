@@ -15,11 +15,6 @@ abstract class AbstractRepositoryService extends AbstractBaseService
     protected $repository;
 
     /**
-     * @var Form
-     */
-    protected $form;
-
-    /**
      * Set the repository
      *
      * @param RepositoryInterface $repository
@@ -39,30 +34,6 @@ abstract class AbstractRepositoryService extends AbstractBaseService
             throw new RuntimeException('No repository is set on this service');
         }
         return $this->repository;
-    }
-
-    /**
-     * Set Form
-     *
-     * @param Form $form
-     * @return AbstractRepositoryService
-     */
-    public function setForm(Form $form)
-    {
-        $this->form = $form;
-        return $this;
-    }
-
-    /**
-     * @return Form
-     */
-    public function getForm()
-    {
-        if (null === $this->form) {
-            throw new RuntimeException('No form instance is available');
-        }
-        $this->getEventManager()->trigger(__FUNCTION__, $this, array('form' => $this->form));
-        return $this->form;
     }
 
     /**
