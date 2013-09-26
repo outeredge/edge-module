@@ -9,6 +9,7 @@ class Module
         return array(
             'factories' => array(
                 'Edge\Serializer\Serializer' => 'Edge\Serializer\SerializerFactory',
+                'Edge\Filter\File\AmazonUpload' => 'Edge\Filter\File\AmazonUploadFactory',
                 'Edge\Rest\JsonRenderer' => function ($services) {
                     $config  = $services->get('Config');
 

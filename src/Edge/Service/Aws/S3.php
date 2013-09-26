@@ -16,6 +16,9 @@ class S3
      */
     protected $s3client;
 
+    /**
+     * @var string
+     */
     protected $bucket;
 
     public function __construct(S3Client $s3client, array $options)
@@ -23,7 +26,7 @@ class S3
         $this->s3client = $s3client;
 
         if (isset($options['bucket'])) {
-            $this->bucket = $options['bucket'];
+            $this->setBucket($options['bucket']);
         }
     }
 
@@ -40,7 +43,7 @@ class S3
             $command = $this->getS3Client()->getCommand(
                 'DeleteObject',
                 array(
-                    'Bucket' => $this->bucket,
+                    'Bucket' => $this->getBucket(),
                     'Key'    => $path
                 )
             );
@@ -65,7 +68,7 @@ class S3
             $command = $this->getS3Client()->getCommand(
                 'PutObject',
                 array(
-                    'Bucket'       => $this->bucket,
+                    'Bucket'       => $this->getBucket(),
                     'Key'          => $uploadpath,
                     'Body'         => EntityBody::factory(fopen($file, 'r')),
                     'ContentType'  => $mime,
@@ -89,7 +92,7 @@ class S3
     public function getFileInfo($file)
     {
         $headers = $this->getS3Client()->headObject(array(
-            'Bucket' => $this->bucket,
+            'Bucket' => $this->getBucket(),
             'Key'    => $file,
         ));
 
@@ -118,7 +121,7 @@ class S3
      */
     public function getDownloadPath($path, $realname)
     {
-        $requestPath = $this->bucket
+        $requestPath = $this->getBucket()
             . '/'
             . $path
             . '?response-content-disposition=attachment;'
@@ -143,7 +146,29 @@ class S3
     {
         $this->getS3Client()->registerStreamWrapper();
 
-        return fopen('s3://' . $this->bucket . '/' . $file, $mode);
+        return fopen('s3://' . $this->getBucket() . '/' . $file, $mode);
+    }
+
+    /**
+     * Set bucket name
+     *
+     * @param string $bucket
+     * @return self
+     */
+    public function setBucket($bucket)
+    {
+        $this->bucket = $bucket;
+        return $this;
+    }
+
+    /**
+     * Get bucket name
+     *
+     * @return string
+     */
+    public function getBucket()
+    {
+        return $this->bucket;
     }
 
     /**

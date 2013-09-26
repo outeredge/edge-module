@@ -13,69 +13,16 @@ class AmazonUpload extends AbstractFilter
      */
     protected $s3service;
 
-    /**
-     * @var array
-     */
-    protected $options = array(
-        'path'            => null,
-        'return_metadata' => true
-    );
-
     public function __construct(S3 $s3service)
     {
         $this->s3service = $s3service;
     }
 
-    /**
-     * Set the upload target path (prepended to filename)
-     *
-     * @param  string $path
-     * @return AmazonUpload
-     */
-    public function setPath($path)
-    {
-        $this->options['path'] = $path;
-        return $this;
-    }
-
-    /**
-     * @return string Upload target path
-     */
-    public function getPath()
-    {
-        return trim($this->options['path'], '/');
-    }
-
-    /**
-     * Set whether to return full metadata
-     *
-     * @param bool $return
-     * @return AmazonUpload
-     */
-    public function setReturnMetadata($return)
-    {
-        $this->options['return_metadata'] = $return;
-        return $this;
-    }
-
-    /**
-     * @return bool When false, only the new path will be returned as a string
-     *              instead of an array of metadata (i.e. type, size, tmp_name)
-     */
-    public function getReturnMetadata()
-    {
-        return $this->options['return_metadata'];
-    }
-
     public function filter($value)
     {
-        $destination = $this->getPath() . '/' . basename($value['tmp_name']);
-
+        $destination = basename($value['tmp_name']);
+        
         $this->uploadFile($value, $destination);
-
-        if (!$this->getReturnMetadata()) {
-            return $destination;
-        }
 
         $value['tmp_name'] = $destination;
 
