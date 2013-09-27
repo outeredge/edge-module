@@ -23,7 +23,7 @@ class S3
         'bucket'        => null,
         'path_prefix'   => null,
         'storage_class' => Storage::STANDARD,
-        'acl'           => CannedAcl::AUTHENTICATED_READ
+        'acl'           => CannedAcl::PRIVATE_ACCESS
     );
 
     public function __construct(S3Client $s3client, array $options)
