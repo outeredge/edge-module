@@ -18,16 +18,19 @@ class Serializer
     }
 
     /**
-     * Serializes the given data to the specified output format
+     * Serialize data to desired format
      *
-     * @param object|array|scalar $data
-     * @param array $groups
-     * @param string $format
-     *
-     * @return string|array
+     * @param object|array|scalar|Paginator $data
+     * @param array|null $groups serialization groups
+     * @param string $format serialization format
+     * @param string $key root key for items, leave null to return items in root
+     * @return mixed
      */
-    public function serialize($data, array $groups = null, $format = 'array')
+    public function serialize($data, array $groups = null, $format = 'array', $key = null)
     {
+        if ($data instanceof Paginator) {
+            return $this->serializePaginator($data, $groups, $format, $key);
+        }
         return $this->getSerializer()->serialize($data, $format, $this->createNewContext($groups));
     }
 
@@ -36,11 +39,11 @@ class Serializer
      *
      * @param Paginator $paginator
      * @param array|null $groups serialization groups
-     * @param string $key root key for items, leave null to return items in root
      * @param string $format serialization format
+     * @param string $key root key for items, leave null to return items in root
      * @return string|array
      */
-    public function serializePaginator(Paginator $paginator, array $groups = null, $key = null, $format = 'array')
+    protected function serializePaginator(Paginator $paginator, array $groups = null, $format = 'array', $key = null)
     {
         $items = iterator_to_array($paginator->getCurrentItems());
 

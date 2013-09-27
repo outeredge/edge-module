@@ -11,12 +11,20 @@ return array(
             'Edge\Filter\File\AmazonUpload' => 'Edge\Filter\File\AmazonUploadFactory',
         )
     ),
-//    'filters' => array(
-//        'factories' => array(
-//            'Aws\Filter\File\S3RenameUpload' => 'Aws\Factory\S3RenameUploadFactory'
-//        ),
-//        'aliases' => array(
-//            'amazonupload' => 'Aws\Filter\File\S3RenameUpload'
-//        )
-//    ),
+    'view_helpers' => array(
+        'factories' => array(
+            'Edge\Serializer\View\Helper\Serialize' => 'Edge\Serializer\View\Helper\SerializeFactory'
+        ),
+        'aliases' => array(
+            'serialize' => 'Edge\Serializer\View\Helper\Serialize'
+        )
+    ),
+    'controller_plugins' => array(
+        'factories' => array(
+            'Edge\Serializer\Mvc\Controller\Plugin\Serialize' => 'Edge\Serializer\Mvc\Controller\Plugin\SerializeFactory'
+        ),
+        'aliases' => array(
+            'serialize' => 'Edge\Serializer\Mvc\Controller\Plugin\Serialize'
+        )
+    )
 );
