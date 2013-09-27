@@ -15,7 +15,8 @@ class S3Factory implements FactoryInterface
     public function createService(ServiceLocatorInterface $serviceLocator)
     {
         $config = $serviceLocator->get('Config');
-        
-        return new S3($serviceLocator->get('aws')->get('s3'), $config['edge']['aws']['s3']);
+        $config = isset($config['edge']['aws']['s3']) ? $config['edge']['aws']['s3'] : array();
+
+        return new S3($serviceLocator->get('aws')->get('s3'), $config);
     }
 }
