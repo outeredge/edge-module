@@ -17,17 +17,19 @@ class S3
     protected $s3client;
 
     /**
-     * @var string
+     * @var array
      */
-    protected $bucket;
+    protected $options = array(
+        'bucket'        => null,
+        'path_prefix'   => null,
+        'storage_class' => Storage::STANDARD,
+        'acl'           => CannedAcl::AUTHENTICATED_READ
+    );
 
     public function __construct(S3Client $s3client, array $options)
     {
         $this->s3client = $s3client;
-
-        if (isset($options['bucket'])) {
-            $this->setBucket($options['bucket']);
-        }
+        $this->options  = array_merge($this->options, $options);
     }
 
     /**
@@ -44,7 +46,7 @@ class S3
                 'DeleteObject',
                 array(
                     'Bucket' => $this->getBucket(),
-                    'Key'    => $path
+                    'Key'    => $this->preparePath($path)
                 )
             );
             $command->execute();
@@ -57,23 +59,23 @@ class S3
      * Upload a file to Amazon S3
      *
      * @param string $file
-     * @param string $uploadpath
+     * @param string $path
      * @param string $mime
      * @throws Exception\RuntimeException
      * @return void
      */
-    public function uploadFile($file, $uploadpath, $mime = 'application/octet-stream')
+    public function uploadFile($file, $path, $mime = 'application/octet-stream')
     {
         try {
             $command = $this->getS3Client()->getCommand(
                 'PutObject',
                 array(
                     'Bucket'       => $this->getBucket(),
-                    'Key'          => $uploadpath,
+                    'Key'          => $this->preparePath($path),
                     'Body'         => EntityBody::factory(fopen($file, 'r')),
                     'ContentType'  => $mime,
-                    'ACL'          => CannedAcl::AUTHENTICATED_READ,
-                    'StorageClass' => Storage::STANDARD,
+                    'ACL'          => $this->options['acl'],
+                    'StorageClass' => $this->options['storage_class'],
                 )
             );
             $command->execute();
@@ -85,15 +87,15 @@ class S3
     /**
      * Get full meta-data for object
      *
-     * @param  string $file
+     * @param  string $path
      * @throws Aws\S3\Exception\S3Exception when object does not exist
      * @return array
      */
-    public function getFileInfo($file)
+    public function getFileInfo($path)
     {
         $headers = $this->getS3Client()->headObject(array(
             'Bucket' => $this->getBucket(),
-            'Key'    => $file,
+            'Key'    => $this->preparePath($path),
         ));
 
         return $headers->toArray();
@@ -123,7 +125,7 @@ class S3
     {
         $requestPath = $this->getBucket()
             . '/'
-            . $path
+            . $this->preparePath($path)
             . '?response-content-disposition=attachment;'
             . 'filename="'
             . rawurlencode($realname)
@@ -142,11 +144,10 @@ class S3
      * @param string $mode
      * @return resource
      */
-    public function getStreamHandle($file, $mode = 'r')
+    public function getStreamHandle($path, $mode = 'r')
     {
         $this->getS3Client()->registerStreamWrapper();
-
-        return fopen('s3://' . $this->getBucket() . '/' . $file, $mode);
+        return fopen('s3://' . $this->getBucket() . '/' . $this->preparePath($path), $mode);
     }
 
     /**
@@ -157,7 +158,7 @@ class S3
      */
     public function setBucket($bucket)
     {
-        $this->bucket = $bucket;
+        $this->options['bucket'] = $bucket;
         return $this;
     }
 
@@ -168,7 +169,40 @@ class S3
      */
     public function getBucket()
     {
-        return $this->bucket;
+        return $this->options['bucket'];
+    }
+
+    /**
+     * Set the path prefix to be appended to all objext request
+     *
+     * @param string $prefix
+     * @return self
+     */
+    public function setPathPrefix($prefix)
+    {
+        $this->options['path_prefix'] = $prefix;
+        return $this;
+    }
+
+    /**
+     * Get file path prefix
+     *
+     * @return string
+     */
+    public function getPathPrefix()
+    {
+        return $this->options['path_prefix'];
+    }
+
+    /**
+     * Prepares an upload path by adding the prefix (if any)
+     *
+     * @param string $path
+     * @return string
+     */
+    protected function preparePath($path)
+    {
+        return $this->getPathPrefix() . $path;
     }
 
     /**

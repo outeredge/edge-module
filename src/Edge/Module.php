@@ -2,14 +2,16 @@
 
 namespace Edge;
 
-class Module
+use Zend\ModuleManager\Feature\AutoloaderProviderInterface;
+use Zend\ModuleManager\Feature\ConfigProviderInterface;
+use Zend\ModuleManager\Feature\ServiceProviderInterface;
+
+class Module implements AutoloaderProviderInterface, ConfigProviderInterface, ServiceProviderInterface
 {
     public function getServiceConfig()
     {
         return array(
             'factories' => array(
-                'Edge\Serializer\Serializer' => 'Edge\Serializer\SerializerFactory',
-                'Edge\Filter\File\AmazonUpload' => 'Edge\Filter\File\AmazonUploadFactory',
                 'Edge\Rest\JsonRenderer' => function ($services) {
                     $config  = $services->get('Config');
 
@@ -42,5 +44,10 @@ class Module
                 ),
             ),
         );
+    }
+
+    public function getConfig()
+    {
+        return include __DIR__ . '/../../config/module.config.php';
     }
 }

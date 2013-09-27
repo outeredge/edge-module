@@ -21,7 +21,7 @@ class AmazonUpload extends AbstractFilter
     public function filter($value)
     {
         $destination = basename($value['tmp_name']);
-        
+
         $this->uploadFile($value, $destination);
 
         $value['tmp_name'] = $destination;
