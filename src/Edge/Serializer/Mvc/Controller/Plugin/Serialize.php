@@ -28,7 +28,7 @@ class Serialize extends AbstractPlugin
      */
     public function __invoke($data, array $groups = null, $format = 'json', $key = null)
     {
-        return $this->getSerializer()->serializePaginator($data, $groups, $format, $key);
+        return $this->getSerializer()->serialize($data, $groups, $format, $key);
     }
 
     /**
