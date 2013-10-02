@@ -24,7 +24,11 @@ return array(
             'Edge\Serializer\Mvc\Controller\Plugin\Serialize' => 'Edge\Serializer\Mvc\Controller\Plugin\SerializeFactory'
         ),
         'aliases' => array(
-            'serialize' => 'Edge\Serializer\Mvc\Controller\Plugin\Serialize'
+            'serialize' => 'Edge\Serializer\Mvc\Controller\Plugin\Serialize',
+            'outputcsv' => 'Edge\Mvc\Controller\Plugin\OutputCsv'
+        ),
+        'invokables' => array(
+            'Edge\Mvc\Controller\Plugin\OutputCsv' => 'Edge\Mvc\Controller\Plugin\OutputCsv'
         )
     )
 );

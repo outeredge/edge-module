@@ -14,14 +14,22 @@ class OutputCsv extends AbstractPlugin
      *
      * @param array  $data
      * @param string $filename
+     * @param array $headerkeys [optional]
      */
-    public function __invoke(array $data, $filename)
+    public function __invoke(array $data, $filename, array $headerkeys = null)
     {
         if (empty($data)) {
             throw new Exception\RuntimeException('No data found for CSV output');
         }
 
         $filename = rawurlencode($filename);
+
+        if ($headerkeys) {
+            $headers    = array_fill_keys(array_flip($headerkeys), null);
+        } else {
+            $headerkeys = array_keys(reset($data));
+            $headers    = array_fill_keys($headerkeys, null);
+        }
 
         header("Cache-Control: must-revalidate, post-check=0, pre-check=0");
         header("Content-Type: text/csv");
@@ -32,15 +40,14 @@ class OutputCsv extends AbstractPlugin
         $fh = fopen('php://output', 'w');
 
         $header = false;
-
         foreach ($data as $row) {
             if (!$header) {
-                fputcsv($fh, array_keys($row));
+                fputcsv($fh, $headerkeys);
                 $header = true;
             }
-
-            fputcsv($fh, $row);
+            fputcsv($fh, array_merge($headers, $row));
         }
+
         fclose($fh);
 
         exit;
