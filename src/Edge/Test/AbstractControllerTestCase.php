@@ -80,6 +80,8 @@ abstract class AbstractControllerTestCase extends AbstractTestCase
 
     protected function setController(AbstractController $controller)
     {
+        $controller->setPluginManager($this->getServiceManager()->get('ControllerPluginManager'));
+        
         $this->controller = $controller;
         return $this;
     }
