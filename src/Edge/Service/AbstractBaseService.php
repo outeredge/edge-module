@@ -36,9 +36,9 @@ abstract class AbstractBaseService extends AbstractEventProvider
     public function getForm()
     {
         if (null === $this->form) {
-            throw new RuntimeException('No form instance is available');
+            throw new Exception\RuntimeException('No form instance is available');
         }
-        
+
         $this->getEventManager()->trigger(__FUNCTION__, $this, array('form' => $this->form));
 
         return $this->form;
