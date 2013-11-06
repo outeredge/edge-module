@@ -7,6 +7,8 @@ use BadMethodCallException;
 
 abstract class AbstractEntity implements ArrayAccess
 {
+    abstract public function getId();
+
     public function offsetExists($offset)
     {
         $method = 'get' . ucfirst($offset);

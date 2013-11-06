@@ -26,7 +26,7 @@ class Serialize extends AbstractPlugin
      * @param string $key root key for items, leave null to return items in root
      * @return mixed
      */
-    public function __invoke($data, array $groups = null, $format = 'json', $key = null)
+    public function __invoke($data, array $groups = null, $format = Serializer::FORMAT_ARRAY, $key = null)
     {
         return $this->getSerializer()->serialize($data, $groups, $format, $key);
     }

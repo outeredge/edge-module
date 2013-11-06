@@ -1,11 +1,11 @@
 <?php
 
-namespace Edge\View\Helper;
+namespace Edge\Serializer\View\Helper;
 
 use Zend\View\Helper\AbstractHelper;
 use Edge\Serializer\Serializer;
 
-class SerializeHelper extends AbstractHelper
+class Serialize extends AbstractHelper
 {
     /**
      * @var Serializer
@@ -26,7 +26,7 @@ class SerializeHelper extends AbstractHelper
      * @param string $key root key for items, leave null to return items in root
      * @return mixed
      */
-    public function __invoke($data, array $groups = null, $format = 'json', $key = null)
+    public function __invoke($data, array $groups = null, $format = Serializer::FORMAT_JSON, $key = null)
     {
         return $this->getSerializer()->serialize($data, $groups, $format, $key);
     }

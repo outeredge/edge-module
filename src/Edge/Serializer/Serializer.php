@@ -8,6 +8,9 @@ use JMS\Serializer\SerializationContext;
 
 class Serializer
 {
+    const FORMAT_ARRAY = 'array';
+    const FORMAT_JSON  = 'json';
+
     protected $serializer;
 
     protected $serializeNull = true;
@@ -26,12 +29,17 @@ class Serializer
      * @param string $key root key for items, leave null to return items in root
      * @return mixed
      */
-    public function serialize($data, array $groups = null, $format = 'array', $key = null)
+    public function serialize($data, array $groups = null, $format = self::FORMAT_ARRAY, $key = null)
     {
         if ($data instanceof Paginator) {
             return $this->serializePaginator($data, $groups, $format, $key);
         }
-        return $this->getSerializer()->serialize($data, $format, $this->createNewContext($groups));
+
+        if (null === $key) {
+            return $this->getSerializer()->serialize($data, $format, $this->createNewContext($groups));
+        }
+
+        return array($key => $this->getSerializer()->serialize($data, $format, $this->createNewContext($groups)));
     }
 
     /**
@@ -43,7 +51,7 @@ class Serializer
      * @param string $key root key for items, leave null to return items in root
      * @return string|array
      */
-    protected function serializePaginator(Paginator $paginator, array $groups = null, $format = 'array', $key = null)
+    protected function serializePaginator(Paginator $paginator, array $groups = null, $format = self::FORMAT_ARRAY, $key = null)
     {
         $items = iterator_to_array($paginator->getCurrentItems());
 
