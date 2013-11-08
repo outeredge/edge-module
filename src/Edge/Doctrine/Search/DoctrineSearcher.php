@@ -277,7 +277,11 @@ class DoctrineSearcher extends AbstractSearcher
             return;
         }
 
-        $joinTable  = $joinTables[$joinAlias];
+        if (!isset($joinTables[$joinAlias])) {
+            throw new Exception\InvalidArgumentException('Invalid join table specified');
+        }
+
+        $joinTable = $joinTables[$joinAlias];
 
         if (substr_count($joinTable, '.')) {
             $this->addJoin($joinTable, $group);
