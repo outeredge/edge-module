@@ -145,10 +145,7 @@ class MailGun implements TransportInterface
             if (empty($name)) {
                 $emails[] = $email;
             } else {
-                if (false !== strstr($name, ',')) {
-                    $name = sprintf('"%s"', $name);
-                }
-                $emails[] = sprintf('%s <%s>', $name, $email);
+                $emails[] = sprintf('"%s" <%s>', $name, $email);
             }
         }
 
