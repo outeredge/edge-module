@@ -48,8 +48,8 @@ abstract class AbstractRestfulController extends ZendRestfulController
     {
         $data = reset($data);
 
-        if (!is_array($data) || !ArrayUtils::isList($data)) {
-            throw new Exception\InvalidArgumentException('Invalid data provided');
+        if (!ArrayUtils::isList($data)) {
+            throw new Exception\InvalidArgumentException('Invalid bulk data provided');
         }
 
         $errors    = false;
