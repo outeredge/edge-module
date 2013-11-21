@@ -2,7 +2,7 @@
 
 namespace Edge\Mail\Api;
 
-use Zebreco\Exception;
+use Edge\Mail\Exception;
 use Zend\Crypt\Hmac;
 
 class MailGunMessage extends Message
@@ -64,6 +64,14 @@ class MailGunMessage extends Message
         return $this->html;
     }
 
+    public function getBodyMime()
+    {
+        if (!$this->hasHeader('body-mime')) {
+            throw new Exception\DomainException('No MIME content available on message');
+        }
+        return $this->getHeader('body-mime');
+    }
+
     public function getStrippedBodyText()
     {
         return $this->getHeader('stripped-text');
@@ -101,5 +109,10 @@ class MailGunMessage extends Message
         }
 
         return $attachments;
+    }
+
+    public function getMessageUrl()
+    {
+        return $this->getHeader('message-url');
     }
 }
