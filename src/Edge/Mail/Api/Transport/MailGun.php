@@ -2,6 +2,7 @@
 
 namespace Edge\Mail\Api\Transport;
 
+use Edge\Mail\Api\MailGunMessage;
 use Edge\Mail\Api\MessageInterface;
 use Edge\Mail\Exception;
 use Zend\Mail\AddressList;
@@ -58,19 +59,10 @@ class MailGun implements TransportInterface
      */
     public function send(MessageInterface $message)
     {
-        $adapter = new Http\Client\Adapter\Curl();
-        $adapter->setOptions(array(
-            'curloptions' => array(
-                CURLOPT_SSL_VERIFYPEER => false, //@todo avoid this
-            )
-        ));
-
-        $client  = new Http\Client();
-        $client->setAdapter($adapter);
+        $client = $this->getHttpClient();
         $client->setMethod('POST');
         $client->setUri(sprintf($this->getOptions()->getBaseUri(), $this->getOptions()->getDomain()));
         $client->setParameterPost($this->messageToPost($message));
-        $client->setAuth('api', $this->getOptions()->getApiKey());
 
         $response = $client->send();
         $result   = $response->getContent();
@@ -95,11 +87,55 @@ class MailGun implements TransportInterface
     }
 
     /**
+     * Retrieve full message from Messages API
+     *
+     * @param MailGunMessage|string $messageOrUrl
+     * @param bool $mime
+     * @return MailGunMessage
+     * @throws Exception\RuntimeException
+     */
+    public function retrieve($messageOrUrl, $mime = false)
+    {
+        if (!$messageOrUrl instanceof MailGunMessage) {
+            $message      = new MailGunMessage();
+            $messageOrUrl = $message->setHeader('message-url', $messageOrUrl);
+        }
+
+        $client = $this->getHttpClient();
+        $client->setUri($messageOrUrl->getMessageUrl());
+
+        if ($mime) {
+            $client->setHeaders(array('Accept' => 'message/rfc2822'));
+        }
+
+        $response = $client->send();
+        $result   = $response->getContent();
+
+        if ($response->getHeaders()->get('Content-Type')->getFieldValue() == 'application/json') {
+            $result = json_decode($result, true);
+        }
+
+        if (!$response->isSuccess()) {
+            $errorstr = $response->getReasonPhrase();
+            if (is_array($result) && !empty($result['message'])) {
+                $errorstr = $result['message'];
+            }
+            throw new Exception\RuntimeException('Unable to retrieve message: ' . $errorstr);
+        }
+
+        if (!is_array($result)) {
+            throw new Exception\RuntimeException('Unexpected response from API');
+        }
+
+        return $messageOrUrl->extract($result, false);
+    }
+
+    /**
      * Convert a Message object into a suitable array for POSTing
      *
      * @param MessageInterface $message
      */
-    public function messageToPost(MessageInterface $message)
+    protected function messageToPost(MessageInterface $message)
     {
         $data = array(
             'from'    => $message->hasHeader('from') ? $this->addressListToString($message->getFrom()) : null,
@@ -128,6 +164,25 @@ class MailGun implements TransportInterface
         }
 
         return array_filter($data);
+    }
+
+    /**
+     * @return Http\Client
+     */
+    protected function getHttpClient()
+    {
+        $adapter = new Http\Client\Adapter\Curl();
+        $adapter->setOptions(array(
+            'curloptions' => array(
+                CURLOPT_SSL_VERIFYPEER => false, //@todo avoid this
+            )
+        ));
+
+        $client  = new Http\Client();
+        $client->setAdapter($adapter);
+        $client->setAuth('api', $this->getOptions()->getApiKey());
+
+        return $client;
     }
 
     /**

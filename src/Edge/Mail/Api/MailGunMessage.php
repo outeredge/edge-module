@@ -20,11 +20,11 @@ class MailGunMessage extends Message
         }
     }
 
-    public function extract($data)
+    public function extract($data, $validate = true)
     {
         parent::extract($data);
 
-        if (!$this->hasHeader('signature') || !$this->validate()) {
+        if ($validate && !$this->validate()) {
             throw new Exception\DomainException('Invalid message source.');
         }
 
@@ -39,6 +39,10 @@ class MailGunMessage extends Message
      */
     protected function validate()
     {
+        if (!$this->hasHeader('signature')) {
+            return false;
+        }
+
         return $this->getHeader('signature') == Hmac::compute($this->apikey, 'sha256', $this->getHeader('timestamp') . $this->getHeader('token'));
     }
 
