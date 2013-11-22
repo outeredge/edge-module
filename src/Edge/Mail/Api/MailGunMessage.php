@@ -76,6 +76,31 @@ class MailGunMessage extends Message
         return $this->getHeader('body-mime');
     }
 
+    /**
+     * Get a stripped version of the body without quoted parts, where possible
+     *
+     * @return string
+     */
+    public function getStrippedBody()
+    {
+        $text      = $this->getStrippedBodyText();
+        $signature = $this->getStrippedSignature();
+
+        if (!empty($signature)) {
+            $text.= "\n" . $signature;
+        }
+
+        if (empty($text)) {
+            $text = $this->getBodyText();
+        }
+
+        if (empty($text)) {
+            $text = 'No message content';
+        }
+
+        return $text;
+    }
+
     public function getStrippedBodyText()
     {
         return $this->getHeader('stripped-text');

@@ -6,9 +6,10 @@ return array(
     ),
     'service_manager' => array(
         'factories' => array(
-            'Edge\Service\Aws\S3'           => 'Edge\Service\Aws\S3Factory',
-            'Edge\Serializer\Serializer'    => 'Edge\Serializer\SerializerFactory',
-            'Edge\Filter\File\AmazonUpload' => 'Edge\Filter\File\AmazonUploadFactory',
+            'Edge\Service\Aws\S3'             => 'Edge\Service\Aws\S3Factory',
+            'Edge\Serializer\Serializer'      => 'Edge\Serializer\SerializerFactory',
+            'Edge\Filter\File\AmazonUpload'   => 'Edge\Filter\File\AmazonUploadFactory',
+            'Edge\Mail\Api\Transport\MailGun' => 'Edge\Mail\Api\Transport\MailGunFactory'
         )
     ),
     'view_helpers' => array(

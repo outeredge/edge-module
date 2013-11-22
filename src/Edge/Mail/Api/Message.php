@@ -93,12 +93,16 @@ class Message implements MessageInterface
     }
 
     /**
-     * Retrieve list of From senders
+     * Retrieve list of From senders, uses Reply-To if set
      *
      * @return AddressList
      */
     public function getFrom()
     {
+        if ($this->hasHeader('Reply-To')) {
+            return $this->getReplyTo();
+        }
+
         return $this->getAddressListFromHeader('from');
     }
 
@@ -130,12 +134,16 @@ class Message implements MessageInterface
     }
 
     /**
-     * Access the address list of the To header
+     * Access the address list of the To header, uses Resent-To if set
      *
      * @return AddressList
      */
     public function getTo()
     {
+        if ($this->hasHeader('Resent-To')) {
+            return $this->getAddressListFromHeader('Resent-To')->merge($this->getAddressListFromHeader('to'));
+        }
+
         return $this->getAddressListFromHeader('to');
     }
 
@@ -547,6 +555,44 @@ class Message implements MessageInterface
             ));
         }
         $addressList->add($emailOrAddressOrList, $name);
+    }
+
+    /**
+     * Get all recipients (to's and cc's) of this message as an address list
+     *
+     * @return \Zend\Mail\AddressList
+     */
+    public function getAllRecipients()
+    {
+        $recipients = $this->getTo();
+        $ccs        = $this->getCc();
+
+        if (!empty($ccs)) {
+            $recipients->merge($ccs);
+        }
+
+        return $recipients;
+    }
+
+    /**
+     * Get an array of message-id's that this message refers to
+     *
+     * @return array
+     */
+    public function getReferences()
+    {
+        $references = array();
+        $pattern    = '/(<.*?>)|/';
+
+        if ($this->hasHeader('References')) {
+            $references = preg_split($pattern, $this->getHeader('References'), null, PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY);
+        }
+
+        if ($this->hasHeader('In-Reply-To')) {
+            $references = array_merge($references, preg_split($pattern, $this->getHeader('In-Reply-To'), null, PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY));
+        }
+
+        return array_unique($references);
     }
 
     protected function clear()

@@ -54,15 +54,24 @@ class MailGun implements TransportInterface
      * Send a message via MailGun
      *
      * @param MessageInterface $message
-     * @return string  newly created message identifier (Message-Id) on success
+     * @return string newly created message identifier (Message-Id) on success
      * @throws Exception\RuntimeException
      */
     public function send(MessageInterface $message)
     {
         $client = $this->getHttpClient();
+        $data   = $this->messageToPost($message);
+        $uri    = sprintf($this->getOptions()->getBaseUri(), $this->getOptions()->getDomain());
+
+        if (!empty($data['message'])) {
+            $client->setFileUpload('message.mime', 'message', $data['message'], 'message/rfc2822');
+            unset($data['message']);
+            $uri.= '.mime';
+        }
+
         $client->setMethod('POST');
-        $client->setUri(sprintf($this->getOptions()->getBaseUri(), $this->getOptions()->getDomain()));
-        $client->setParameterPost($this->messageToPost($message));
+        $client->setUri($uri);
+        $client->setParameterPost($data);
 
         $response = $client->send();
         $result   = $response->getContent();
@@ -97,8 +106,7 @@ class MailGun implements TransportInterface
     public function retrieve($messageOrUrl, $mime = false)
     {
         if (!$messageOrUrl instanceof MailGunMessage) {
-            $message      = new MailGunMessage();
-            $messageOrUrl = $message->setHeader('message-url', $messageOrUrl);
+            $messageOrUrl = $this->createMessage()->setHeader('message-url', $messageOrUrl);
         }
 
         $client = $this->getHttpClient();
@@ -131,6 +139,16 @@ class MailGun implements TransportInterface
     }
 
     /**
+     * Create a new message for use with this transport
+     *
+     * @return MailGunMessage
+     */
+    public function createMessage()
+    {
+        return new MailGunMessage(array('api_key' => $this->getOptions()->getApiKey()));
+    }
+
+    /**
      * Convert a Message object into a suitable array for POSTing
      *
      * @param MessageInterface $message
@@ -144,12 +162,13 @@ class MailGun implements TransportInterface
             'subject' => $message->getSubject(),
             'text'    => $message->getBodyText(),
             'html'    => $message->getBodyHtml(),
+            'message' => $message->getHeader('body-mime')
         );
 
         $cckey = empty($data['to']) ? 'to' : 'cc';
         $data[$cckey] = $message->hasHeader('cc') ? $this->addressListToString($message->getCc()) : null;
 
-        if (empty($data['text']) && empty($data['html'])) {
+        if (empty($data['text']) && empty($data['html']) && empty($data['message'])) {
             $data['text'] = ' ';
         }
 
