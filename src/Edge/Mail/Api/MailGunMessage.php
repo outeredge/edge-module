@@ -116,25 +116,46 @@ class MailGunMessage extends Message
         return $this->getHeader('stripped-signature');
     }
 
+    /**
+     * Does this message contain attachments
+     *
+     * @return boolean
+     */
     public function hasAttachments()
     {
-        return $this->hasHeader('attachment-count');
+        return $this->hasHeader('attachment-count') || $this->hasHeader('attachments');
     }
 
+    /**
+     * Get attachments as array of paths
+     *
+     * @return array similar to $_FILES
+     */
     public function getAttachments()
     {
-        $attachments = array();
-
         if (!$this->hasAttachments()) {
-            return $attachments;
+            return array();
         }
 
-        $i = 1;
-        while ($i <= $this->getHeader('attachment-count')) {
-            if ($this->hasHeader('attachment-'.$i)) {
-                $attachments[] = $this->getHeader('attachment-'.$i);
+        $attachments = array();
+
+        if ($this->hasHeader('attachment-count')) {
+            $i = 1;
+            while ($i <= $this->getHeader('attachment-count')) {
+                if ($this->hasHeader('attachment-'.$i)) {
+                    $attachments[] = $this->getHeader('attachment-'.$i);
+                }
+                $i++;
             }
-            $i++;
+        } else {
+            foreach ($this->getHeader('attachments') as $attachment) {
+                $attachments[] = array(
+                    'tmp_name' => $attachment['url'],
+                    'name'     => $attachment['name'],
+                    'size'     => $attachment['size'],
+                    'type'     => $attachment['content-type']
+                );
+            }
         }
 
         return $attachments;
