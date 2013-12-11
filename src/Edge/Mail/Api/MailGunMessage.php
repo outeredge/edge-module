@@ -148,7 +148,7 @@ class MailGunMessage extends Message
                 $i++;
             }
         } else {
-            foreach ($this->getHeader('attachments') as $attachment) {
+            foreach (json_decode($this->getHeader('attachments'), true) as $attachment) {
                 $attachments[] = array(
                     'tmp_name' => $attachment['url'],
                     'name'     => $attachment['name'],
