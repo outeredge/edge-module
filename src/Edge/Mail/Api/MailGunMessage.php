@@ -133,10 +133,6 @@ class MailGunMessage extends Message
      */
     public function getAttachments()
     {
-        if (!$this->hasAttachments()) {
-            return array();
-        }
-
         $attachments = array();
 
         if ($this->hasHeader('attachment-count')) {
