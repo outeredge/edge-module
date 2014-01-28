@@ -149,12 +149,19 @@ class MailGunMessage extends Message
             }
         } elseif ($this->hasHeader('attachments')) {
             foreach (json_decode($this->getHeader('attachments'), true) as $attachment) {
+                $tmpname = tempnam(sys_get_temp_dir(), 'attach_');
+                $error   = UPLOAD_ERR_OK;
+
+                if (!file_put_contents($tmpname, file_get_contents('api:' . $this->apikey . '@' . $attachment['url']))) {
+                    $error = UPLOAD_ERR_NO_FILE;
+                }
+
                 $attachments[] = array(
-                    'tmp_name' => 'api:' . $this->apikey . '@' . $attachment['url'],
+                    'tmp_name' => $tmpname,
                     'name'     => $attachment['name'],
                     'size'     => $attachment['size'],
                     'type'     => $attachment['content-type'],
-                    'error'    => UPLOAD_ERR_OK
+                    'error'    => $error
                 );
             }
         }
