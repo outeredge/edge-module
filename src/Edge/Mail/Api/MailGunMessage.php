@@ -76,6 +76,12 @@ class MailGunMessage extends Message
         return $this->getHeader('body-mime');
     }
 
+    public function setBodyMime($mime)
+    {
+        $this->setHeader('body-mime', $mime);
+        return $this;
+    }
+
     /**
      * Get a stripped version of the body without quoted parts, where possible
      *
