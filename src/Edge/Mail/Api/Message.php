@@ -35,7 +35,7 @@ class Message implements MessageInterface
     protected $headersKeys = array();
 
     /**
-     * Extra array into message headers
+     * Extract array into message headers
      *
      * @param  array $data
      * @return Message
