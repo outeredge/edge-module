@@ -2,6 +2,7 @@
 
 namespace Edge\Rest\Listener;
 
+use Exception;
 use PhlyRestfully\ApiProblem;
 use Zend\EventManager\EventManagerInterface;
 use Zend\EventManager\ListenerAggregateInterface;
@@ -20,9 +21,30 @@ use Zend\View\Model\JsonModel;
 class ApiProblemListener implements ListenerAggregateInterface
 {
     /**
+     * Default values to match in Accept header
+     *
+     * @var string
+     */
+    protected static $acceptFilter = 'application/hal+json,application/api-problem+json,application/json';
+
+    /**
      * @var \Zend\Stdlib\CallbackHandler[]
      */
     protected $listeners = array();
+
+    /**
+     * Constructor
+     *
+     * Set the accept filter, if one is passed
+     *
+     * @param string $filter
+     */
+    public function __construct($filter = null)
+    {
+        if (is_string($filter) && !empty($filter)) {
+            self::$acceptFilter = $filter;
+        }
+    }
 
     /**
      * @param EventManagerInterface $events
@@ -55,35 +77,31 @@ class ApiProblemListener implements ListenerAggregateInterface
             return;
         }
 
+        if (self::$acceptFilter != '*') {
+            $headers = $e->getRequest()->getHeaders();
+            if (!$headers->has('Accept')) {
+                return;
+            }
+
+            $match = $headers->get('Accept')->match(self::$acceptFilter);
+            if (!$match || $match->getTypeString() == '*/*') {
+                return;
+            }
+        }
+
         $model = $e->getResult();
         if (!$model instanceof ModelInterface) {
             return;
         }
 
         $exception  = $model->getVariable('exception');
-        if (!$exception instanceof \Exception) {
-            return;
-        }
-
-        $headers = $e->getRequest()->getHeaders();
-        if (!$headers->has('accept')) {
-            return;
-        }
-
-        $accept  = $headers->get('Accept');
-        if (($match = $accept->match('application/json')) == false) {
-            return;
-        }
-
-        if ($match->getTypeString() != 'application/json') {
+        if (!$exception instanceof Exception) {
             return;
         }
 
         $httpStatus = $exception->getCode() ?: 500;
+        $jsonModel  = new JsonModel(array('api-problem' => new ApiProblem($httpStatus, $exception)));
 
-        // Create a new model with the API-Problem,
-        // reset the result and view model in the event
-        $jsonModel = new JsonModel(array('api-problem' => new ApiProblem($httpStatus, $exception)));
         $e->setResult($jsonModel);
         $e->setViewModel($jsonModel);
     }

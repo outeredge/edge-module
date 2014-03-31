@@ -6,34 +6,12 @@ use Edge\Exception;
 use Edge\Service\Exception as ServiceException;
 use PhlyRestfully\ApiProblem;
 use Zend\Mvc\Controller\AbstractRestfulController as ZendRestfulController;
-use Zend\Paginator\Paginator;
 use Zend\Stdlib\ArrayUtils;
 use Zend\Http\Response;
 use Zend\View\Model\JsonModel;
 
 abstract class AbstractRestfulController extends ZendRestfulController
 {
-    /**
-     * Prepare a paginator from page and limit query strings
-     *
-     * @param \Zend\Paginator\Paginator $paginator
-     * @return \Zend\Paginator\Paginator
-     */
-    public function preparePaginator(Paginator $paginator)
-    {
-        $page  = $this->params()->fromQuery('page', 1);
-        $limit = $this->params()->fromQuery('limit', null);
-
-        if (null === $limit) {
-            $limit = 10;
-        }
-
-        $paginator->setCurrentPageNumber($page);
-        $paginator->setItemCountPerPage($limit);
-
-        return $paginator;
-    }
-
     /**
      * Bulk Process Data, handles POST, PUT & DELETE
      *
