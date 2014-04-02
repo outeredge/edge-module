@@ -15,8 +15,8 @@ class Twig extends AbstractValidator
     const UNKNOWN_PARSE_ERROR = 'unknownParseError';
 
     protected $messageTemplates = array(
-        self::SYNTAX_ERROR        => "A syntax error occured, %value%",
-        self::SECURITY_ERROR      => "A security error occured, %value%",
+        self::SYNTAX_ERROR        => "A syntax error occured. %value%",
+        self::SECURITY_ERROR      => "A security error occured. %value%",
         self::UNKNOWN_PARSE_ERROR => "An unknown error occured trying to parse the template"
     );
 
