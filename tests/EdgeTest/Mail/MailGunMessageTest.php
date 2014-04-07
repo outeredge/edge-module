@@ -52,7 +52,7 @@ class MailGunMessageTest extends PHPUnit_Framework_TestCase
 
         $this->message->extract($data);
 
-        $this->assertEquals("My stripped text\n\nThanks, David", $this->message->getStrippedBody());
+        $this->assertEquals("My stripped text\nThanks, David", $this->message->getStrippedBody());
     }
 
     public function testGetPlainBodyWhenNoStrippedBody()

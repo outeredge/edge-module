@@ -93,7 +93,7 @@ class MailGunMessage extends Message
         $signature = $this->getStrippedSignature();
 
         if (!empty($signature)) {
-            $text.= "\n\n" . $signature;
+            $text.= "\n" . $signature;
         }
 
         if (empty($text)) {
