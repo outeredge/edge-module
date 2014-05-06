@@ -2,14 +2,20 @@
 
 return array(
     'edge' => array(
-        // put your options here
+        'doctrine' => array(
+            'fixtures' => []
+        )
     ),
     'service_manager' => array(
+        'aliases' => array(
+            'EntityManager' => 'Doctrine\ORM\EntityManager'
+        ),
         'factories' => array(
             'Edge\Service\Aws\S3'             => 'Edge\Service\Aws\S3Factory',
             'Edge\Serializer\Serializer'      => 'Edge\Serializer\SerializerFactory',
             'Edge\Filter\File\AmazonUpload'   => 'Edge\Filter\File\AmazonUploadFactory',
-            'Edge\Mail\Api\Transport\MailGun' => 'Edge\Mail\Api\Transport\MailGunFactory'
+            'Edge\Mail\Api\Transport\MailGun' => 'Edge\Mail\Api\Transport\MailGunFactory',
+            'Edge\Doctrine\Fixtures\Loader'   => 'Edge\Doctrine\Fixtures\LoaderFactory'
         )
     ),
     'view_helpers' => array(
