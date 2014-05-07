@@ -1,9 +1,13 @@
 {
-    "name": "outeredge/edge",
-    "description": "A set of generic classes which are commonly used across multiple modules.",
+    "name": "outeredge/edge-zf2",
+    "description": "Edge is a library of useful classes designed to aid the creation of Web Applications with ZF2.",
     "type": "library",
+    "license": "MIT",
     "keywords": [
-        "edge"
+        "module",
+        "zf2",
+        "edge",
+        "doctrine"
     ],
     "homepage": "https://github.com/outeredge/edge",
     "authors": [
@@ -14,8 +18,8 @@
         }
     ],
     "require": {
-        "php": ">=5.3.3",
-        "zendframework/zendframework": ">=2.1"
+        "php": ">=5.4.7",
+        "zendframework/zendframework": "~2.2"
     },
     "suggest": {
         "phly/phly-restfully": "PhlyRestfully for Restful API features",
