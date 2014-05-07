@@ -3,6 +3,7 @@
 namespace Edge\Mail\Api;
 
 use Edge\Mail\Exception;
+use Edge\Stdlib\StreamUtils;
 use Zend\Crypt\Hmac;
 
 class MailGunMessage extends Message
@@ -170,7 +171,7 @@ class MailGunMessage extends Message
             $url = str_replace('://', '://api:' . $this->apikey . '@', $attachment['url']);
 
             $error = UPLOAD_ERR_NO_FILE;
-            if (file_put_contents($tmp, file_get_contents($url))) {
+            if (file_put_contents($tmp, StreamUtils::file_get_contents($url))) {
                 $error = UPLOAD_ERR_OK;
             }
 

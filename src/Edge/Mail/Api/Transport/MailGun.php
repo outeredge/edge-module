@@ -5,6 +5,7 @@ namespace Edge\Mail\Api\Transport;
 use Edge\Mail\Api\MailGunMessage;
 use Edge\Mail\Api\MessageInterface;
 use Edge\Mail\Exception;
+use Edge\Stdlib\StreamUtils;
 use Zend\Mail\AddressList;
 use Zend\Http;
 
@@ -74,7 +75,7 @@ class MailGun implements TransportInterface
         $client->setParameterPost($data);
 
         foreach ($message->getAttachments() as $attachment) {
-            $client->setFileUpload($attachment['name'], 'attachment', file_get_contents($attachment['tmp_name']), $attachment['type']);
+            $client->setFileUpload($attachment['name'], 'attachment', StreamUtils::file_get_contents($attachment['tmp_name']), $attachment['type']);
         }
 
         $response = $client->send();
