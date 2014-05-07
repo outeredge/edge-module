@@ -200,6 +200,39 @@ interface MessageInterface
     public function getBodyHtml();
 
     /**
+     * Add a new attachment
+     *
+     * @param string $filename
+     * @param string $path
+     * @param string|null $ctype
+     * @param int|null $size
+     * @return MessageInterface
+     */
+    public function addAttachment($filename, $path, $ctype = null, $size = null);
+
+    /**
+     * Are there attachments?
+     *
+     * @return bool
+     */
+    public function hasAttachments();
+
+    /**
+     * Set multiple attachments
+     *
+     * @param mixed $attachments
+     * @return MessageInterface
+     */
+    public function setAttachments($attachments);
+
+    /**
+     * Get array of attachments in $_FILES format
+     *
+     * @return array
+     */
+    public function getAttachments();
+
+    /**
      * Does a header exist with the specified name?
      *
      * @param string $name

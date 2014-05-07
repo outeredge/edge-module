@@ -27,6 +27,11 @@ class Message implements MessageInterface
     /**
      * @var array
      */
+    protected $attachments = array();
+
+    /**
+     * @var array
+     */
     protected $headers = array();
 
     /**
@@ -358,6 +363,46 @@ class Message implements MessageInterface
     public function getBodyHtml()
     {
         return $this->html;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function addAttachment($filename, $path, $ctype = null, $size = null)
+    {
+        $this->attachments[] = array(
+            'tmp_name' => $path,
+            'name'     => $filename,
+            'size'     => $size,
+            'type'     => $ctype
+        );
+
+        return $this;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function hasAttachments()
+    {
+        return !empty($this->attachments);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getAttachments()
+    {
+        return $this->attachments;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setAttachments($attachments)
+    {
+        $this->attachments = (array) $attachments;
+        return $this;
     }
 
     /**

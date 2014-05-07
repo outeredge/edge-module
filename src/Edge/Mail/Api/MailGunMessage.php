@@ -129,48 +129,63 @@ class MailGunMessage extends Message
      */
     public function hasAttachments()
     {
-        return $this->hasHeader('attachment-count') || $this->hasHeader('attachments');
+        return $this->hasHeader('attachment-count') || !empty($this->attachments);
     }
 
     /**
-     * Get attachments as array of paths
-     *
-     * @return array similar to $_FILES
+     * {@inheritdoc}
      */
     public function getAttachments()
     {
+        if (!$this->hasHeader('attachment-count')) {
+            return parent::getAttachments();
+        }
+
         $attachments = array();
 
-        if ($this->hasHeader('attachment-count')) {
-            $i = 1;
-            while ($i <= $this->getHeader('attachment-count')) {
-                if ($this->hasHeader('attachment-'.$i)) {
-                    $attachments[] = $this->getHeader('attachment-'.$i);
-                }
-                $i++;
+        $i = 1;
+        while ($i <= $this->getHeader('attachment-count')) {
+            if ($this->hasHeader('attachment-'.$i)) {
+                $attachments[] = $this->getHeader('attachment-'.$i);
             }
-        } elseif ($this->hasHeader('attachments')) {
-            foreach (json_decode($this->getHeader('attachments'), true) as $attachment) {
-                $tmp = tempnam(sys_get_temp_dir(), 'attach_');
-                $url = str_replace('://', '://api:' . $this->apikey . '@', $attachment['url']);
-
-                $error = UPLOAD_ERR_NO_FILE;
-                if (file_put_contents($tmp, @file_get_contents($url))) {
-                    $error = UPLOAD_ERR_OK;
-                }
-
-                $attachments[] = array(
-                    'tmp_name' => $tmp,
-                    'name'     => $attachment['name'],
-                    'size'     => $attachment['size'],
-                    'type'     => $attachment['content-type'],
-                    'error'    => $error
-                );
-            }
+            $i++;
         }
 
         return $attachments;
     }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setAttachments($attachments)
+    {
+        $this->attachments = array();
+
+        if (is_array($attachments)) {
+            return parent::setAttachments($attachments);
+        }
+
+        foreach (json_decode($attachments, true) as $attachment) {
+            $tmp = tempnam(sys_get_temp_dir(), 'attach_');
+            $url = str_replace('://', '://api:' . $this->apikey . '@', $attachment['url']);
+
+            $error = UPLOAD_ERR_NO_FILE;
+            if (file_put_contents($tmp, file_get_contents($url))) {
+                $error = UPLOAD_ERR_OK;
+            }
+
+            $this->attachments[] = array(
+                'tmp_name' => $tmp,
+                'name'     => $attachment['name'],
+                'size'     => $attachment['size'],
+                'type'     => $attachment['content-type'],
+                'error'    => $error
+            );
+        }
+
+        return $this;
+    }
+
 
     public function getMessageUrl()
     {

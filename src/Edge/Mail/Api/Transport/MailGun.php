@@ -73,6 +73,10 @@ class MailGun implements TransportInterface
         $client->setUri($uri);
         $client->setParameterPost($data);
 
+        foreach ($message->getAttachments() as $attachment) {
+            $client->setFileUpload($attachment['name'], 'attachment', file_get_contents($attachment['tmp_name']), $attachment['type']);
+        }
+
         $response = $client->send();
         $result   = $response->getContent();
 
