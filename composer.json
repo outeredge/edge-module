@@ -19,7 +19,7 @@
     ],
     "require": {
         "php": ">=5.4.7",
-        "zendframework/zendframework": "~2.2"
+        "zendframework/zendframework": ">=2.2"
     },
     "suggest": {
         "phly/phly-restfully": "PhlyRestfully for Restful API features",
