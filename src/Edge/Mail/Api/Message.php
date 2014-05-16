@@ -534,7 +534,12 @@ class Message implements MessageInterface
     protected function createAddressList($value)
     {
         $values = str_getcsv($value, ',');
-        array_walk($values, 'trim');
+        array_walk(
+            $values,
+            function (&$value) {
+                $value = trim($value);
+            }
+        );
 
         $addressList = new AddressList();
 

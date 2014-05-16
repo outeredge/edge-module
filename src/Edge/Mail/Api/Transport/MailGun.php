@@ -79,7 +79,7 @@ class MailGun implements TransportInterface
         }
 
         $response = $client->send();
-        $result   = $response->getContent();
+        $result   = $response->getBody();
 
         if ($response->getHeaders()->get('Content-Type')->getFieldValue() == 'application/json') {
             $result = json_decode($result, true);
@@ -122,7 +122,7 @@ class MailGun implements TransportInterface
         }
 
         $response = $client->send();
-        $result   = $response->getContent();
+        $result   = $response->getBody();
 
         if (stripos($response->getHeaders()->get('Content-Type')->getFieldValue(), 'application/json') === 0) {
             $result = json_decode($result, true);
