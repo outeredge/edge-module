@@ -2,19 +2,19 @@
 
 namespace Edge\Markdown;
 
-use Michelf\MarkdownExtra;
+use Michelf\Markdown;
 
 class GithubFlavouredMarkdown implements MarkdownInterface
 {
     /**
-     * Apply Github flavoured markdown to plain text, then passes through MarkdownExtra
+     * Apply Github flavoured markdown to plain text, then passes through Markdown
      *
      * @param string $text
      * @return string
      */
     public function transform($text)
     {
-        $markdown = new MarkdownExtra();
+        $markdown = new Markdown();
         $text     = $this->applyFlavour($text);
 
         return $markdown->transform($text);
