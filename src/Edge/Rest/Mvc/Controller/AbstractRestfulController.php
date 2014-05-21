@@ -4,7 +4,7 @@ namespace Edge\Rest\Mvc\Controller;
 
 use Edge\Exception;
 use Edge\Service\Exception as ServiceException;
-use PhlyRestfully\ApiProblem;
+use ZF\ApiProblem\ApiProblem;
 use Zend\Mvc\Controller\AbstractRestfulController as ZendRestfulController;
 use Zend\Stdlib\ArrayUtils;
 use Zend\Http\Response;

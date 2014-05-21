@@ -2,7 +2,7 @@
 
 namespace Edge\Rest\View;
 
-use PhlyRestfully\ApiProblem;;
+use ZF\ApiProblem\ApiProblem;;
 use Zend\View\Renderer\JsonRenderer;
 use Zend\View\Model\JsonModel;
 

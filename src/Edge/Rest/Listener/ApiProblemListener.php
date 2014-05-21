@@ -3,7 +3,7 @@
 namespace Edge\Rest\Listener;
 
 use Exception;
-use PhlyRestfully\ApiProblem;
+use ZF\ApiProblem\ApiProblem;
 use Zend\EventManager\EventManagerInterface;
 use Zend\EventManager\ListenerAggregateInterface;
 use Zend\Mvc\MvcEvent;

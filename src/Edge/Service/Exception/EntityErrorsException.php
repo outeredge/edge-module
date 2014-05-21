@@ -2,7 +2,7 @@
 
 namespace Edge\Service\Exception;
 
-use PhlyRestfully\Exception\DomainException;
+use ZF\ApiProblem\Exception\DomainException;
 
 class EntityErrorsException extends DomainException implements ExceptionInterface
 {
