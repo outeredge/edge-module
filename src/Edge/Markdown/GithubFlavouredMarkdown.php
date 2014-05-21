@@ -2,7 +2,7 @@
 
 namespace Edge\Markdown;
 
-use Michelf\Markdown;
+use Michelf\MarkdownExtra;
 
 class GithubFlavouredMarkdown implements MarkdownInterface
 {
@@ -14,10 +14,8 @@ class GithubFlavouredMarkdown implements MarkdownInterface
      */
     public function transform($text)
     {
-        $markdown = new Markdown();
-        $text     = $this->applyFlavour($text);
-
-        return $markdown->transform($text);
+        $markdown = new MarkdownExtra();
+        return $markdown->transform($this->applyFlavour($text));
     }
 
     /**

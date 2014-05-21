@@ -22,8 +22,8 @@
         "zendframework/zendframework": "~2.2"
     },
     "suggest": {
-        "phly/phly-restfully": "PhlyRestfully for Restful API features",
-        "michelf/php-markdown": "v1.3 for Markdown parsers",
+        "zfcampus/zf-api-problem": "Restful API features",
+        "michelf/php-markdown": "For Twig Markdown extension",
         "jms/serializer": "JMS Serializer for serialization utility"
     },
     "autoload": {
