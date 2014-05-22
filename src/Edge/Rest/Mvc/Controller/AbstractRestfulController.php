@@ -82,7 +82,7 @@ abstract class AbstractRestfulController extends ZendRestfulController
 
             if ($problem instanceof ApiProblem) {
                 $responses[] = array(
-                    'code'    => $problem->getStatus(),
+                    'code'    => $problem->status,
                     'headers' => array('content-type' => 'application/api-problem+json'),
                     'body'    => $problem->toArray()
                 );
