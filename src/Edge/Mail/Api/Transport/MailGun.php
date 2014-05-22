@@ -8,6 +8,7 @@ use Edge\Mail\Exception;
 use Edge\Stdlib\StreamUtils;
 use Zend\Mail\AddressList;
 use Zend\Http;
+use Zend\Json\Json;
 
 class MailGun implements TransportInterface
 {
@@ -82,7 +83,7 @@ class MailGun implements TransportInterface
         $result   = $response->getBody();
 
         if ($response->getHeaders()->get('Content-Type')->getFieldValue() == 'application/json') {
-            $result = json_decode($result, true);
+            $result = Json::decode($result, Json::TYPE_ARRAY);
         }
 
         if (!$response->isSuccess()) {
@@ -125,7 +126,7 @@ class MailGun implements TransportInterface
         $result   = $response->getBody();
 
         if (stripos($response->getHeaders()->get('Content-Type')->getFieldValue(), 'application/json') === 0) {
-            $result = json_decode($result, true);
+            $result = Json::decode($result, Json::TYPE_ARRAY);
         }
 
         if (!$response->isSuccess()) {

@@ -5,6 +5,7 @@ namespace Edge\Mail\Api;
 use Edge\Mail\Exception;
 use Edge\Stdlib\StreamUtils;
 use Zend\Crypt\Hmac;
+use Zend\Json\Json;
 
 class MailGunMessage extends Message
 {
@@ -166,7 +167,7 @@ class MailGunMessage extends Message
             return parent::setAttachments($attachments);
         }
 
-        foreach (json_decode($attachments, true) as $attachment) {
+        foreach (Json::decode($attachments, Json::TYPE_ARRAY) as $attachment) {
             $tmp = tempnam(sys_get_temp_dir(), 'attach_');
             $url = str_replace('://', '://api:' . $this->apikey . '@', $attachment['url']);
 

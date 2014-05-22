@@ -7,6 +7,7 @@ use Edge\Search\Exception;
 use Edge\Search\Filter;
 use Zend\Filter\DateTimeFormatter;
 use Zend\Http;
+use Zend\Json\Json;
 
 class CloudSearchSearcher extends AbstractSearcher
 {
@@ -65,7 +66,7 @@ class CloudSearchSearcher extends AbstractSearcher
             throw new Exception\RuntimeException("Invalid response received from CloudSearch.\n" . $response->getContent());
         }
 
-        $results = json_decode($response->getContent(), true);
+        $results = Json::decode($response->getContent(), Json::TYPE_ARRAY);
 
         $this->count = $results['hits']['found'];
 

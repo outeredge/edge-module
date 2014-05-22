@@ -6,6 +6,7 @@ use Edge\Search\Exception;
 use Edge\Search\IndexerInterface;
 use Edge\Search\IndexableEntityInterface;
 use Zend\Http;
+use Zend\Json\Json;
 
 class CloudSearchIndexer implements IndexerInterface
 {
@@ -133,7 +134,7 @@ class CloudSearchIndexer implements IndexerInterface
             return false;
         }
 
-        $results = json_decode($response->getContent(), true);
+        $results = Json::decode($response->getContent(), Json::TYPE_ARRAY);
         $count   = $results['adds'] + $results['deletes'];
 
         return $count != count($data) ? 0 : $count;
