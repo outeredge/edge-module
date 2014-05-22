@@ -99,8 +99,7 @@ class ApiProblemListener implements ListenerAggregateInterface
             return;
         }
 
-        $httpStatus = $exception->getCode() ?: 500;
-        $jsonModel  = new JsonModel(array('api-problem' => new ApiProblem($httpStatus, $exception)));
+        $jsonModel  = new JsonModel(array('api-problem' => new ApiProblem($exception->getCode(), $exception)));
 
         $e->setResult($jsonModel);
         $e->setViewModel($jsonModel);

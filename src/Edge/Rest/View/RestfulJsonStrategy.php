@@ -35,7 +35,7 @@ class RestfulJsonStrategy extends JsonStrategy
 
         if ($this->renderer->isApiProblem()) {
             $e->getResponse()->getHeaders()->addHeaderLine('content-type', 'application/api-problem+json');
-            $e->getResponse()->setStatusCode($this->renderer->getApiProblem()->httpStatus);
+            $e->getResponse()->setStatusCode($this->renderer->getApiProblem()->getStatus());
         }
     }
 }
