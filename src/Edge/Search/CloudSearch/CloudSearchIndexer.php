@@ -122,7 +122,7 @@ class CloudSearchIndexer implements IndexerInterface
         $client->setAdapter($adapter);
         $client->setMethod('POST');
         $client->setUri($this->getDocumentEndpoint());
-        $client->setRawBody(json_encode($data));
+        $client->setRawBody(Json::encode($data));
         $client->setHeaders(array('Content-Type' => 'application/json'));
 
         $response = $client->send();
