@@ -5,6 +5,8 @@ namespace Edge\Doctrine\Fixtures;
 use Doctrine\Common\DataFixtures\Executor\ORMExecutor;
 use Doctrine\Common\DataFixtures\Loader as DoctrineLoader;
 use Doctrine\ORM\EntityManager;
+use Zend\ServiceManager\ServiceLocatorInterface;
+use Zend\ServiceManager\ServiceLocatorAwareInterface;
 
 class Loader
 {
@@ -14,14 +16,20 @@ class Loader
     protected $entityManager;
 
     /**
+     * @var ServiceLocatorInterface
+     */
+    protected $serviceLocator;
+
+    /**
      * @var array
      */
     protected $paths;
 
-    public function __construct(EntityManager $em, array $paths)
+    public function __construct(EntityManager $em, ServiceLocatorInterface $serviceLocator, array $paths)
     {
-        $this->entityManager = $em;
-        $this->paths         = $paths;
+        $this->entityManager  = $em;
+        $this->serviceLocator = $serviceLocator;
+        $this->paths          = $paths;
     }
 
     public function loadAllFixtures()
@@ -33,6 +41,14 @@ class Loader
             $fixtureLoader->loadFromDirectory($path);
         }
 
-        $executor->execute($fixtureLoader->getFixtures(), true);
+        $fixtures = $fixtureLoader->getFixtures();
+
+        foreach ($fixtures as $fixture) {
+            if ($fixture instanceof ServiceLocatorAwareInterface) {
+                $fixture->setServiceLocator($this->serviceLocator);
+            }
+        }
+
+        $executor->execute($fixtures, true);
     }
 }

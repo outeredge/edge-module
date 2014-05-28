@@ -16,6 +16,6 @@ class LoaderFactory implements FactoryInterface
         $config = $serviceLocator->get('Config');
         $paths  = $config['edge']['doctrine']['fixtures'];
 
-        return new Loader($serviceLocator->get('EntityManager'), $paths);
+        return new Loader($serviceLocator->get('EntityManager'), $serviceLocator, $paths);
     }
 }
