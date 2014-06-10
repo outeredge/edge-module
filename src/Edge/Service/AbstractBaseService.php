@@ -2,11 +2,14 @@
 
 namespace Edge\Service;
 
-use Edge\EventManager\AbstractEventProvider;
+use Zend\EventManager\EventManagerAwareInterface;
+use Zend\EventManager\EventManagerAwareTrait;
 use Zend\Form\Form;
 
-abstract class AbstractBaseService extends AbstractEventProvider
+abstract class AbstractBaseService implements EventManagerAwareInterface
 {
+    use EventManagerAwareTrait;
+
     /**
      * @var Form
      */
