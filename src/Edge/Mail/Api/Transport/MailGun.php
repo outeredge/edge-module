@@ -164,15 +164,13 @@ class MailGun implements TransportInterface
         $data = array(
             'from'    => $message->hasHeader('from') ? $this->addressListToString($message->getFrom()) : null,
             'to'      => $message->hasHeader('to') ? $this->addressListToString($message->getTo()) : null,
+            'cc'      => $message->hasHeader('cc') ? $this->addressListToString($message->getCc()) : null,
             'bcc'     => $message->hasHeader('bcc') ? $this->addressListToString($message->getBcc()) : null,
             'subject' => $message->getSubject(),
             'text'    => $message->getBodyText(),
             'html'    => $message->getBodyHtml(),
             'message' => $message->getHeader('body-mime')
         );
-
-        $cckey = empty($data['to']) ? 'to' : 'cc';
-        $data[$cckey] = $message->hasHeader('cc') ? $this->addressListToString($message->getCc()) : null;
 
         if (empty($data['text']) && empty($data['html']) && empty($data['message'])) {
             $data['text'] = ' ';

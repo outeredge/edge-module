@@ -141,7 +141,7 @@ class DoctrineSearcher extends AbstractSearcher
                 $orXs->add($andXs);
             }
         }
-       
+
         if ($orXs->count()) {
             $qb->andWhere($orXs);
         }

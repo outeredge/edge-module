@@ -59,11 +59,21 @@ class Message implements MessageInterface
         }
 
         foreach ($data as $header => $value) {
-            $setter = 'set' . ucfirst($this->normalizeFieldName($header));
+            $fieldname = ucfirst($this->normalizeFieldName($header));
+
+            $adder  = 'add' . $fieldname;
+            $setter = 'set' . $fieldname;
+
+            if (method_exists($this, $adder)) {
+                $this->$adder($value);
+                continue;
+            }
+
             if (method_exists($this, $setter)) {
                 $this->$setter($value);
                 continue;
             }
+
             $this->setHeader($header, $value);
         }
 
