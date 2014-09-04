@@ -85,7 +85,8 @@ class MailGunMessage extends Message
     }
 
     /**
-     * Get a stripped version of the body without quoted parts, where possible
+     * Get a stripped version of the body without quoted parts, where possible.
+     * Will fall back to unstripped text, then HTML.
      *
      * @return string
      */
@@ -99,7 +100,11 @@ class MailGunMessage extends Message
         }
 
         if (empty($text)) {
-            $text = $this->getBodyText();
+            $text = trim($this->getBodyText());
+        }
+
+        if (empty($text)) {
+            $text = trim($this->getStrippedBodyHtml());
         }
 
         if (empty($text)) {
