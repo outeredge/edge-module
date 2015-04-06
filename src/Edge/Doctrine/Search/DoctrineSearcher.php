@@ -5,12 +5,11 @@ namespace Edge\Doctrine\Search;
 use ArrayIterator;
 use DateTime;
 use Doctrine\ORM\QueryBuilder;
-use Doctrine\DBAL\DBALException;
 use Doctrine\ORM\Query\Expr\Join;
+use Doctrine\ORM\Tools\Pagination\Paginator as DoctrinePaginator;
 use Edge\Search\AbstractSearcher;
 use Edge\Search\Exception;
 use Edge\Search\Filter;
-use Doctrine\ORM\Tools\Pagination\Paginator as DoctrinePaginator;
 
 class DoctrineSearcher extends AbstractSearcher
 {
@@ -177,7 +176,7 @@ class DoctrineSearcher extends AbstractSearcher
 
         try {
             $results = $paginator->getIterator();
-        } catch (DBALException $ex) {
+        } catch (\RuntimeException $ex) {
             $paginator->setUseOutputWalkers(true);
             $results = $paginator->getIterator();
         }
