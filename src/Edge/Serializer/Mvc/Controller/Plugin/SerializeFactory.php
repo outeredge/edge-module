@@ -10,7 +10,7 @@ class SerializeFactory implements FactoryInterface
     /**
      * {@inheritdoc}
      *
-     * @return Serializer
+     * @return Serialize
      */
     public function createService(ServiceLocatorInterface $plugins)
     {

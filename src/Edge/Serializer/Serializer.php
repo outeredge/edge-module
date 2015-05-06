@@ -3,7 +3,7 @@
 namespace Edge\Serializer;
 
 use Zend\Paginator\Paginator;
-use JMS\Serializer\SerializerInterface;
+use JMS\Serializer\Serializer as JMSSerializer;
 use JMS\Serializer\SerializationContext;
 
 class Serializer
@@ -15,7 +15,7 @@ class Serializer
 
     protected $serializeNull = true;
 
-    public function __construct(SerializerInterface $serializer)
+    public function __construct(JMSSerializer $serializer)
     {
         $this->serializer = $serializer;
     }
@@ -32,42 +32,38 @@ class Serializer
     public function serialize($data, array $groups = null, $format = self::FORMAT_ARRAY, $key = null)
     {
         if ($data instanceof Paginator) {
-            return $this->serializePaginator($data, $groups, $format, $key);
+            $data = $this->paginatorToArray($data, $key);
+        } elseif ($key !== null) {
+            $data = array($key => $data);
         }
 
-        if (null === $key) {
-            return $this->getSerializer()->serialize($data, $format, $this->createNewContext($groups));
+        if ($format == self::FORMAT_ARRAY) {
+            return $this->getSerializer()->toArray($data, $this->createNewContext($groups));
         }
 
-        return array($key => $this->getSerializer()->serialize($data, $format, $this->createNewContext($groups)));
+        return $this->getSerializer()->serialize($data, $format, $this->createNewContext($groups));
     }
 
     /**
-     * Serialize a paginator to the desired format
+     * Convert a paginator to array
      *
      * @param Paginator $paginator
-     * @param array|null $groups serialization groups
-     * @param string $format serialization format
      * @param string $key root key for items, leave null to return items in root
-     * @return string|array
+     * @return array
      */
-    protected function serializePaginator(Paginator $paginator, array $groups = null, $format = self::FORMAT_ARRAY, $key = null)
+    protected function paginatorToArray(Paginator $paginator, $key = null)
     {
         $items = iterator_to_array($paginator->getCurrentItems());
 
         if (null === $key) {
-            return $this->getSerializer()->serialize($items, $format, $this->createNewContext($groups));
+            return $items;
         }
 
-        return $this->getSerializer()->serialize(
-            array(
-                'pages'   => $paginator->count(),
-                'current' => $paginator->getCurrentPageNumber(),
-                'count'   => $paginator->getTotalItemCount(),
-                $key      => $items
-            ),
-            $format,
-            $this->createNewContext($groups)
+        return array(
+            'pages'   => $paginator->count(),
+            'current' => $paginator->getCurrentPageNumber(),
+            'count'   => $paginator->getTotalItemCount(),
+            $key      => $items
         );
     }
 
