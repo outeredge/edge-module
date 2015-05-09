@@ -202,7 +202,7 @@ class S3
      */
     protected function preparePath($path)
     {
-        return urlencode($this->getPathPrefix() . $path);
+        return rawurlencode($this->getPathPrefix() . $path);
     }
 
     /**
