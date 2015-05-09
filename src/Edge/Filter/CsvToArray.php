@@ -14,9 +14,14 @@ class CsvToArray extends AbstractFilter
      */
     public function filter($value)
     {
+        if ($value === '' || $value === null) {
+            return $value;
+        }
+
         if (is_string($value)) {
             return explode(',', $value);
         }
+
         return $value;
     }
 }
