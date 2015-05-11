@@ -125,7 +125,7 @@ class S3
     {
         $requestPath = $this->getBucket()
             . '/'
-            . $this->preparePath($path)
+            . rawurlencode($this->preparePath($path))
             . '?response-content-disposition=attachment;'
             . 'filename="'
             . rawurlencode($realname)
@@ -202,7 +202,7 @@ class S3
      */
     protected function preparePath($path)
     {
-        return rawurlencode($this->getPathPrefix() . $path);
+        return $this->getPathPrefix() . $path;
     }
 
     /**
