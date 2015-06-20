@@ -4,4 +4,3 @@ Edge is a library of useful classes designed to aid the creation of Web Applicat
 
 ## Requirements
  - PHP 5.5 or higher
- - [Zend Framework 2](http://www.github.com/zendframework/zf2)
