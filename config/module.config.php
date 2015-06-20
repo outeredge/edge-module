@@ -15,7 +15,9 @@ return array(
             'Edge\Serializer\Serializer'      => 'Edge\Serializer\SerializerFactory',
             'Edge\Filter\File\AmazonUpload'   => 'Edge\Filter\File\AmazonUploadFactory',
             'Edge\Mail\Api\Transport\MailGun' => 'Edge\Mail\Api\Transport\MailGunFactory',
-            'Edge\Doctrine\Fixtures\Loader'   => 'Edge\Doctrine\Fixtures\LoaderFactory'
+            'Edge\Doctrine\Fixtures\Loader'   => 'Edge\Doctrine\Fixtures\LoaderFactory',
+            'Edge\Rest\JsonRenderer'          => 'Edge\Rest\JsonRendererFactory',
+            'Edge\Rest\JsonStrategy'          => 'Edge\Rest\JsonStrategyFactory'
         )
     ),
     'view_helpers' => array(
