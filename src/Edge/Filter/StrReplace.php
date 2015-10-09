@@ -18,9 +18,10 @@ class StrReplace implements FilterInterface
 
     public function filter($value)
     {
-        if (null !== $value) {
+        if (is_string($value)) {
             $value = str_replace($this->search, $this->replace, $value);
         }
+        
         return $value;
     }
 }
