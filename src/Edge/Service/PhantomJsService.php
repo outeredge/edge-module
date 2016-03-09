@@ -20,7 +20,7 @@ class PhantomJsService
             $args[] = escapeshellarg($arg);
         }
 
-        $cmd = escapeshellcmd("{$this->bin} " . implode(' ', $args));
+        $cmd = escapeshellcmd("{$this->bin} --ignore-ssl-errors=true " . implode(' ', $args));
 
         $output = array();
         $code = 1;
