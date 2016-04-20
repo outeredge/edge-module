@@ -135,7 +135,7 @@ class Message extends StorageMessage {
     /**
      * Get address list of froms
      *
-     * @return \Zend\Mail\AddressList
+     * @return \Edge\Mail\AddressList
      */
     public function getFrom()
     {
@@ -149,7 +149,7 @@ class Message extends StorageMessage {
     /**
      * Get address list of to's
      *
-     * @return \Zend\Mail\AddressList
+     * @return \Edge\Mail\AddressList
      */
     public function getTo()
     {

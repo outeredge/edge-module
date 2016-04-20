@@ -2,10 +2,10 @@
 
 namespace Edge\Mail\Api;
 
+use Edge\Mail\Address;
+use Edge\Mail\AddressList;
 use Edge\Mail\Exception;
 use Traversable;
-use Zend\Mail\Address;
-use Zend\Mail\AddressList;
 use Zend\Mail\Header\MessageId;
 
 /**
@@ -620,7 +620,7 @@ class Message implements MessageInterface
     /**
      * Get all recipients (to's and cc's) of this message as an address list
      *
-     * @return \Zend\Mail\AddressList
+     * @return \Edge\Mail\AddressList
      */
     public function getAllRecipients()
     {
