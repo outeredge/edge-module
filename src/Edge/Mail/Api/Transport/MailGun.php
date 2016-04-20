@@ -178,7 +178,8 @@ class MailGun implements TransportInterface
 
         foreach ($this->getOptions()->getAdditionalHeaders() as $name) {
             if ($message->hasHeader($name)) {
-                $data['h:'.$name] = $message->getHeader($name);
+                $value = $message->getHeader($name);
+                $data['h:'.$name] = ($value instanceof AddressList) ? $this->addressListToString($value) : $value;
             }
         }
 
