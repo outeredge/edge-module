@@ -4,8 +4,6 @@ namespace Edge\Service\Aws;
 
 use Aws\S3\S3Client;
 use Aws\S3\Exception\S3Exception;
-use Aws\S3\Enum\CannedAcl;
-use Aws\S3\Enum\Storage;
 use Edge\Service\Exception;
 use Guzzle\Http\EntityBody;
 
@@ -22,8 +20,8 @@ class S3
     protected $options = array(
         'bucket'        => null,
         'path_prefix'   => null,
-        'storage_class' => Storage::STANDARD,
-        'acl'           => CannedAcl::PRIVATE_ACCESS
+        'storage_class' => 'STANDARD',
+        'acl'           => 'private'
     );
 
     public function __construct(S3Client $s3client, array $options)
@@ -42,14 +40,10 @@ class S3
     public function deleteFile($path)
     {
         try {
-            $command = $this->getS3Client()->getCommand(
-                'DeleteObject',
-                array(
-                    'Bucket' => $this->getBucket(),
-                    'Key'    => $this->preparePath($path)
-                )
-            );
-            $command->execute();
+            $this->getS3Client()->deleteObject([
+                'Bucket' => $this->getBucket(),
+                'Key'    => $this->preparePath($path)
+            ]);
         } catch (S3Exception $ex) {
             throw new Exception\RuntimeException('Unable to delete file on Amazon S3', $ex->getCode(), $ex);
         }
@@ -67,18 +61,14 @@ class S3
     public function uploadFile($file, $path, $mime = 'application/octet-stream')
     {
         try {
-            $command = $this->getS3Client()->getCommand(
-                'PutObject',
-                array(
-                    'Bucket'       => $this->getBucket(),
-                    'Key'          => $this->preparePath($path),
-                    'Body'         => EntityBody::factory(fopen($file, 'r')),
-                    'ContentType'  => $mime,
-                    'ACL'          => $this->options['acl'],
-                    'StorageClass' => $this->options['storage_class'],
-                )
-            );
-            $command->execute();
+            $this->getS3Client()->putObject([
+                'Bucket'       => $this->getBucket(),
+                'Key'          => $this->preparePath($path),
+                'Body'         => EntityBody::factory(fopen($file, 'r')),
+                'ContentType'  => $mime,
+                'ACL'          => $this->options['acl'],
+                'StorageClass' => $this->options['storage_class'],
+            ]);
         } catch (S3Exception $ex) {
             throw new Exception\RuntimeException('Unable to upload file to Amazon S3', $ex->getCode(), $ex);
         }
@@ -93,10 +83,10 @@ class S3
      */
     public function getFileInfo($path)
     {
-        $headers = $this->getS3Client()->headObject(array(
+        $headers = $this->getS3Client()->headObject([
             'Bucket' => $this->getBucket(),
             'Key'    => $this->preparePath($path),
-        ));
+        ]);
 
         return $headers->toArray();
     }
@@ -123,18 +113,13 @@ class S3
      */
     public function getDownloadPath($path, $realname)
     {
-        $requestPath = $this->getBucket()
-            . '/'
-            . rawurlencode($this->preparePath($path))
-            . '?response-content-disposition=attachment;'
-            . 'filename="'
-            . rawurlencode($realname)
-            . '"';
+        $cmd = $this->getS3Client()->getCommand('GetObject', [
+            'Bucket' => $this->getBucket(),
+            'Key'    => $this->preparePath($path),
+            'ResponseContentDisposition' => 'attachment; filename="' . rawurlencode($realname) . '"'
+        ]);
 
-        return $this->getS3Client()->createPresignedUrl(
-            $this->getS3Client()->get($requestPath),
-            '+30 minutes'
-        );
+        return (string) $this->getS3Client()->createPresignedRequest($cmd, '+30 minutes')->getUri();
     }
 
     /**
