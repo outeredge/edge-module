@@ -195,15 +195,13 @@ class MailGun implements TransportInterface
      */
     protected function getHttpClient()
     {
-        $adapter = new Http\Client\Adapter\Curl();
-        $adapter->setOptions(array(
-            'curloptions' => array(
-                CURLOPT_SSL_VERIFYPEER => false, //@todo avoid this
-            )
-        ));
-
         $client  = new Http\Client();
-        $client->setAdapter($adapter);
+        $client->setOptions(array(
+            'maxredirects'  => 0,
+            'timeout'       => 60,
+            'sslverifypeer' => false //@todo avoid this
+        ));
+        $client->setAdapter(new Http\Client\Adapter\Curl);
         $client->setAuth('api', $this->getOptions()->getApiKey());
 
         return $client;
