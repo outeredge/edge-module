@@ -108,16 +108,12 @@ class Message implements MessageInterface
     }
 
     /**
-     * Retrieve list of From senders, uses Reply-To if set
+     * Retrieve list of From senders
      *
      * @return AddressList
      */
     public function getFrom()
     {
-        if ($this->hasHeader('Reply-To')) {
-            return $this->getReplyTo();
-        }
-
         return $this->getAddressListFromHeader('from');
     }
 
