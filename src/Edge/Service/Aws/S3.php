@@ -5,7 +5,6 @@ namespace Edge\Service\Aws;
 use Aws\S3\S3Client;
 use Aws\S3\Exception\S3Exception;
 use Edge\Service\Exception;
-use Guzzle\Http\EntityBody;
 
 class S3
 {
@@ -64,7 +63,7 @@ class S3
             $this->getS3Client()->putObject([
                 'Bucket'       => $this->getBucket(),
                 'Key'          => $this->preparePath($path),
-                'Body'         => EntityBody::factory(fopen($file, 'r')),
+                'Body'         => fopen($file, 'r'),
                 'ContentType'  => $mime,
                 'ACL'          => $this->options['acl'],
                 'StorageClass' => $this->options['storage_class'],
