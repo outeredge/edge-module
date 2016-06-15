@@ -28,7 +28,8 @@
     "suggest": {
         "zfcampus/zf-api-problem": "Restful API features",
         "michelf/php-markdown": "For Twig Markdown extension",
-        "jms/serializer": "JMS Serializer for serialization utility"
+        "jms/serializer": "JMS Serializer for serialization utility",
+        "chargebee/chargebee-php": "For Chargebee functions"
     },
     "autoload": {
         "psr-0": {
