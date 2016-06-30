@@ -2,6 +2,7 @@
 
 namespace Edge\Service;
 
+use ChargeBee_Customer;
 use ChargeBee_Environment;
 use ChargeBee_Event;
 use ChargeBee_HostedPage;
@@ -47,6 +48,11 @@ class ChargebeeService
     public function subscriptionUpdate($id, $params = array())
     {
         return ChargeBee_Subscription::update($id, $params, $this->getEnvironment());
+    }
+
+    public function customerUpdate($id, $params = array())
+    {
+        return ChargeBee_Customer::update($id, $params, $this->getEnvironment());
     }
 
     public function hostedPageCheckoutExisting($params)
