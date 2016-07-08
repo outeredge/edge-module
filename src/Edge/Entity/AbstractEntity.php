@@ -33,4 +33,9 @@ abstract class AbstractEntity implements ArrayAccess
     {
         throw new BadMethodCallException("Array access of class " . get_class($this) . " is read-only!");
     }
+    
+    public function getEntityShortName()
+    {
+        return strtolower(substr(strrchr(static::class, '\\'), 1));
+    }
 }
