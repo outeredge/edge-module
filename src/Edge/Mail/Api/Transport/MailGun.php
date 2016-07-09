@@ -198,12 +198,10 @@ class MailGun implements TransportInterface
         $client  = new Http\Client();
         $client->setOptions(array(
             'maxredirects'  => 0,
-            'timeout'       => 60,
-            'sslverifypeer' => false //@todo avoid this
+            'timeout'       => 60
         ));
-        $client->setAdapter(new Http\Client\Adapter\Curl);
         $client->setAuth('api', $this->getOptions()->getApiKey());
-
+        
         return $client;
     }
 
