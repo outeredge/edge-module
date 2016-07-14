@@ -13,8 +13,9 @@ use Edge\Search\Filter;
 
 class DoctrineSearcher extends AbstractSearcher
 {
-    const FIELD_TYPE_BOOLEAN = 'bool';
-    const FIELD_TYPE_DATE    = 'date';
+    const FIELD_TYPE_BOOLEAN  = 'bool';
+    const FIELD_TYPE_DATE     = 'date';
+    const FIELD_TYPE_FULLTEXT = 'fulltext';
 
     /**
      * @var DoctrineSearcherOptions
@@ -147,13 +148,28 @@ class DoctrineSearcher extends AbstractSearcher
 
         $keywordFields = $this->getOptions()->getKeywordFields();
         if (!empty($keywordFields) && null !== $filter->getKeywords()) {
+            $hasFulltext = false;
             $orX = $qb->expr()->orX();
+
             foreach ($keywordFields as $field) {
-                $this->addJoin($field);
-                $orX->add($qb->expr()->like($field,  ':keyword'));
+                $mappedField = $this->getMappedField($field);
+                foreach ((array) $mappedField['field'] as $fieldName) {
+                    $this->addJoin($fieldName);
+                    if ($mappedField['type'] === self::FIELD_TYPE_FULLTEXT) {
+                        $hasFulltext = true;
+                        $orX->add(sprintf('MATCH (%s) AGAINST (%s) > 1', $fieldName, ':fulltext_keyword'));
+                    } else {
+                        $orX->add($qb->expr()->like($fieldName,  ':keyword'));
+                    }
+                }
             }
+
             $qb->andWhere($orX);
             $qb->setParameter('keyword', '%'.$filter->getKeywords().'%');
+
+            if ($hasFulltext) {
+                $qb->setParameter('fulltext_keyword', $filter->getKeywords());
+            }
         }
 
         if (null !== $filter->getSortField()) {
@@ -197,6 +213,7 @@ class DoctrineSearcher extends AbstractSearcher
      * @param string $operator
      * @param mixed  $value
      * @param string $param
+     * @param string $type
      * @throws Exception\InvalidArgumentException
      */
     protected function getExpression($field, $operator, &$value, $param, $type = null)
@@ -204,28 +221,20 @@ class DoctrineSearcher extends AbstractSearcher
         switch ($operator) {
             case Filter::COMPARISON_EQUALS:
                 return $this->getEqualsExpr($field, $value, $param, $type);
-                break;
             case Filter::COMPARISON_NOT_EQUALS:
-                return $this->getNotEqualsExpr($field, $value, $param, $type);
-                break;
+                return $this->getNotEqualsExpr($field, $value, $param);
             case Filter::COMPARISON_LIKE:
-                return $this->getLikeExpr($field, $value, $param);
-                break;
+                return $this->getLikeExpr($field, $value, $param, $type);
             case Filter::COMPARISON_GREATER:
                 return $this->getGreaterThanExpr($field, $param);
-                break;
             case Filter::COMPARISON_GREATER_OR_EQ:
                 return $this->getGreaterThanOrEqualToExpr($field, $param);
-                break;
             case Filter::COMPARISON_LESS:
                 return $this->getLessThanExpr($field, $param);
-                break;
             case Filter::COMPARISON_LESS_OR_EQ:
                 return $this->getLassThanOrEqualToExpr($field, $param);
-                break;
             default:
                 throw new Exception\InvalidArgumentException('Invalid operator specified');
-                break;
         }
     }
 
@@ -322,7 +331,7 @@ class DoctrineSearcher extends AbstractSearcher
      */
     protected function getEqualsExpr($field, $value, $paramName, $type = null)
     {
-        $expr  = $this->getQueryBuilder()->expr();
+        $expr = $this->getQueryBuilder()->expr();
 
         if (null === $value) {
             return $expr->isNull($field);
@@ -345,9 +354,9 @@ class DoctrineSearcher extends AbstractSearcher
      * @param mixed   $value search value
      * @param string  $paramName parameter name to use
      */
-    protected function getNotEqualsExpr($field, $value, $paramName, $type = null)
+    protected function getNotEqualsExpr($field, $value, $paramName)
     {
-        $expr  = $this->getQueryBuilder()->expr();
+        $expr = $this->getQueryBuilder()->expr();
 
         if (null === $value) {
             return $expr->isNotNull($field);
@@ -363,10 +372,14 @@ class DoctrineSearcher extends AbstractSearcher
      * @param mixed   $value search value
      * @param string  $paramName parameter name to use
      */
-    protected function getLikeExpr($field, &$value, $paramName)
+    protected function getLikeExpr($field, &$value, $paramName, $type = null)
     {
         if (null === $value) {
             return $this->getEqualsExpr($field, $value, $paramName);
+        }
+
+        if ($type == self::FIELD_TYPE_FULLTEXT) {
+            return "MATCH ($field) AGAINST ($paramName) > 1";
         }
 
         $value = '%' . $value . '%';
