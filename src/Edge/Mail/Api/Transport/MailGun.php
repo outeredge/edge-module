@@ -176,10 +176,12 @@ class MailGun implements TransportInterface
             $data['text'] = ' ';
         }
 
-        foreach ($this->getOptions()->getAdditionalHeaders() as $name) {
-            if ($message->hasHeader($name)) {
-                $value = $message->getHeader($name);
-                $data['h:'.$name] = ($value instanceof AddressList) ? $this->addressListToString($value) : $value;
+        if (empty($data['message'])) {
+            foreach ($this->getOptions()->getAdditionalHeaders() as $name) {
+                if ($message->hasHeader($name)) {
+                    $value = $message->getHeader($name);
+                    $data['h:'.$name] = ($value instanceof AddressList) ? $this->addressListToString($value) : $value;
+                }
             }
         }
 
