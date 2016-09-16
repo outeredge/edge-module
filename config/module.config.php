@@ -25,7 +25,10 @@ return array(
             'Edge\Serializer\View\Helper\Serialize' => 'Edge\Serializer\View\Helper\SerializeFactory'
         ),
         'aliases' => array(
-            'serialize' => 'Edge\Serializer\View\Helper\Serialize'
+            'serialize' => 'Edge\Serializer\View\Helper\Serialize',
+        ),
+        'invokables' => array(
+            'markdown'  => 'Edge\Markdown\View\Helper\Markdown'
         )
     ),
     'controller_plugins' => array(

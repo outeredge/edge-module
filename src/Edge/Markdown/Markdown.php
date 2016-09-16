@@ -2,27 +2,25 @@
 
 namespace Edge\Markdown;
 
-use Michelf\MarkdownExtra;
+use Parsedown;
 
-class Markdown implements MarkdownInterface
+class Markdown extends Parsedown implements MarkdownInterface
 {
+    public function __construct($breaksEnabled = true, $urlsLinked = true, $markupEscaped = true)
+    {
+        $this->setBreaksEnabled($breaksEnabled);
+        $this->setUrlsLinked($urlsLinked);
+        $this->setMarkupEscaped($markupEscaped);
+    }
+
     /**
-     * Apply Markdown to (already escaped) plain text
+     * Apply markdown to plain text
      *
      * @param string $text
      * @return string
      */
     public function transform($text)
     {
-        $markdown = new MarkdownExtra();
-        $markdown->hard_wrap = true;
-        $markdown->code_block_content_func = function($input) {
-            return $input;
-        };
-        $markdown->code_span_content_func = function($input) {
-            return $input;
-        };
-
-        return $markdown->transform($this->applyFlavour($text));
+        return $this->text($text);
     }
 }

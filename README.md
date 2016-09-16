@@ -1,6 +1,6 @@
-# Edge Module for Zend Framework 2
+# Edge Module
 
-Edge is a library of useful classes designed to aid the creation of Web Applications with ZF2.
+Edge is a library of useful classes designed to aid the creation of Web Applications.
 
 ## Requirements
- - PHP 5.5 or higher
+ - PHP 5.6 or higher

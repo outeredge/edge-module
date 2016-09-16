@@ -2,7 +2,7 @@
 
 namespace Edge\Twig\Extension;
 
-use Edge\Markdown\Markdown;
+use Edge\Markdown\Markdown as EdgeMarkdown;
 use Edge\Markdown\MarkdownInterface;
 use Twig_Extension;
 use Twig_Filter_Method;
@@ -53,7 +53,7 @@ class Markdown extends Twig_Extension
     public function getMarkdown()
     {
         if (null === $this->markdown) {
-            $this->markdown = new Markdown();
+            $this->markdown = new EdgeMarkdown();
         }
 
         return $this->markdown;
