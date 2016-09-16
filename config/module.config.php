@@ -18,6 +18,9 @@ return array(
             'Edge\Doctrine\Fixtures\Loader'   => 'Edge\Doctrine\Fixtures\LoaderFactory',
             'Edge\Rest\JsonRenderer'          => 'Edge\Rest\JsonRendererFactory',
             'Edge\Rest\JsonStrategy'          => 'Edge\Rest\JsonStrategyFactory'
+        ),
+        'invokables' => array(
+            'Edge\Markdown\Markdown'          => 'Edge\Markdown\Markdown    '
         )
     ),
     'view_helpers' => array(
@@ -27,8 +30,6 @@ return array(
         ),
         'aliases' => array(
             'serialize' => 'Edge\Serializer\View\Helper\Serialize',
-        ),
-        'invokables' => array(
             'markdown'  => 'Edge\Markdown\View\Helper\Markdown'
         )
     ),

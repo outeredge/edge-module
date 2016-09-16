@@ -2,7 +2,6 @@
 
 namespace Edge\Twig\Extension;
 
-use Edge\Markdown\Markdown as EdgeMarkdown;
 use Edge\Markdown\MarkdownInterface;
 use Twig_Extension;
 use Twig_Filter_Method;
@@ -13,6 +12,11 @@ class Markdown extends Twig_Extension
      * @var MarkdownInterface
      */
     protected $markdown;
+
+    public function __construct(MarkdownInterface $markdown)
+    {
+        $this->markdown = $markdown;
+    }
 
     public function getName()
     {
@@ -27,35 +31,13 @@ class Markdown extends Twig_Extension
     }
 
     /**
-     * Transfer text to html
+     * Transfer plain text to HTML
      *
      * @param string $text
      * @return string
      */
     public function transform($text)
     {
-        return $this->getMarkdown()->transform($text);
-    }
-
-    /**
-     * Set the Markdown parser to use
-     *
-     * @param MarkdownInterface $markdown
-     */
-    public function setMarkdown(MarkdownInterface $markdown)
-    {
-        $this->markdown = $markdown;
-    }
-
-    /**
-     * @return MarkdownInterface
-     */
-    public function getMarkdown()
-    {
-        if (null === $this->markdown) {
-            $this->markdown = new EdgeMarkdown();
-        }
-
-        return $this->markdown;
+        return $this->markdown->transform($text);
     }
 }
