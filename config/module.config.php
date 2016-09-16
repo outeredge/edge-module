@@ -20,7 +20,7 @@ return array(
             'Edge\Rest\JsonStrategy'          => 'Edge\Rest\JsonStrategyFactory'
         ),
         'invokables' => array(
-            'Edge\Markdown\Markdown'          => 'Edge\Markdown\Markdown    '
+            'Edge\Markdown\Markdown'          => 'Edge\Markdown\Markdown'
         )
     ),
     'view_helpers' => array(
