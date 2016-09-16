@@ -15,6 +15,10 @@ class GithubFlavouredMarkdown implements MarkdownInterface
     public function transform($text)
     {
         $markdown = new MarkdownExtra();
+        $markdown->code_block_content_func = function($input) {
+            return $input;
+        };
+
         return $markdown->transform($this->applyFlavour($text));
     }
 
