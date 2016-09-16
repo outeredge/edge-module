@@ -2,7 +2,7 @@
 
 namespace Edge\Mail\Storage;
 
-use dflydev\markdown\MarkdownExtraParser;
+use Edge\Markdown\Markdown;
 use Edge\Mail\Exception;
 use Zend\Mime\Part as MimePart;
 use Zend\Mime\Message as MimeMessage;
@@ -79,15 +79,11 @@ class Message extends StorageMessage {
      */
     public function createMultiPartBody($text)
     {
-        if (!class_exists('MarkdownExtraParser')) {
-            throw new Exception\RuntimeException('MarkdownExtraParser library was not available');
-        }
-
         $plain = new MimePart($text);
         $plain->type = "text/plain";
 
-        $markdownParser = new MarkdownExtraParser();
-        $html = new MimePart($markdownParser->transformMarkdown($text));
+        $markdown = new Markdown();
+        $html = new MimePart($markdown->transform($text));
         $html->type = "text/html";
 
         $alternatives = new MimeMessage();
