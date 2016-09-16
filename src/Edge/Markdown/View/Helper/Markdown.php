@@ -2,23 +2,20 @@
 
 namespace Edge\Markdown\View\Helper;
 
-use Edge\Markdown\Markdown as EdgeMarkdown;
+use Edge\Markdown\MarkdownInterface;
 use Zend\View\Helper\AbstractHelper;
 
 class Markdown extends AbstractHelper
 {
     protected $markdown;
 
-    public function __invoke($text)
+    public function __construct(MarkdownInterface $markdown)
     {
-        return $this->getMarkdown()->transform($text);
+        $this->markdown = $markdown;
     }
 
-    protected function getMarkdown()
+    public function __invoke($text)
     {
-        if ($this->markdown === null) {
-            $this->markdown = new EdgeMarkdown();
-        }
-        return $this->markdown;
+        return $this->markdown->transform($text);
     }
 }

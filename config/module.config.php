@@ -22,7 +22,8 @@ return array(
     ),
     'view_helpers' => array(
         'factories' => array(
-            'Edge\Serializer\View\Helper\Serialize' => 'Edge\Serializer\View\Helper\SerializeFactory'
+            'Edge\Serializer\View\Helper\Serialize' => 'Edge\Serializer\View\Helper\SerializeFactory',
+            'Edge\Markdown\View\Helper\Markdown' => 'Edge\Markdown\View\Helper\MarkdownFactory'
         ),
         'aliases' => array(
             'serialize' => 'Edge\Serializer\View\Helper\Serialize',
