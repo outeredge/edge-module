@@ -18,7 +18,8 @@
         }
     ],
     "require": {
-        "php": ">=5.6"
+        "php": ">=5.6",
+        "zendframework/zend-mail": "^2.7.1"
     },
     "suggest": {
         "zfcampus/zf-api-problem": "Restful API features",
