@@ -125,7 +125,10 @@ class Filter
                 }
             }
 
-            $this->data[$group]['mode']             = $groupmode;
+            if (!isset($this->data[$group]['mode'])) {
+                $this->data[$group]['mode'] = $groupmode;
+            }
+            
             $this->data[$group]['fields'][$field][] = [
                 'value'      => $value,
                 'comparison' => $comparison,

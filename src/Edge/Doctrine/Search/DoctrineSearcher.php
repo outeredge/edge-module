@@ -104,7 +104,7 @@ class DoctrineSearcher extends AbstractSearcher
             $qb->getEntityManager()->clear();
         }
 
-        foreach ($filter->getAllFieldValues() as $group) {
+        foreach ($filter->getAllFieldValues() as $groupkey => $group) {
             $exprs = $qb->expr()->andX();
 
             foreach ($group['fields'] as $field => $values) {
@@ -116,7 +116,7 @@ class DoctrineSearcher extends AbstractSearcher
                     $orX         = $qb->expr()->orX();
 
                     foreach ((array) $mappedField['field'] as $fieldName) {
-                        $this->addJoin($fieldName, $group);
+                        $this->addJoin($fieldName, $groupkey);
                         if (!isset($this->conditionalFields[$fieldName])) {
                             $orX->add($this->getExpression($fieldName, $data['comparison'], $value, $param, $mappedField['type']));
                         } else {
@@ -134,7 +134,7 @@ class DoctrineSearcher extends AbstractSearcher
                 $exprs->add($expr);
             }
 
-            if ($group == 0) {
+            if ($groupkey == 0) {
                 $qb->andWhere($exprs);
             } else {
                 $orXs->add($exprs);
