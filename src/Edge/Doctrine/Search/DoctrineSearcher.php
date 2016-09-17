@@ -119,7 +119,7 @@ class DoctrineSearcher extends AbstractSearcher
                         $this->addJoin($fieldName, $group);
 
                         if (!isset($this->conditionalFields[$fieldName])) {
-                            $orX->add($this->getExpression($fieldName, $data['comparison'], $value, $param, $mappedField['type']));
+                            $orX->add($this->getExpression($fieldName, $data['comparison'], $value, $param, $mappedField['type'], $data['allow_null']));
                         } else {
                             $value = null;
                         }
@@ -216,8 +216,15 @@ class DoctrineSearcher extends AbstractSearcher
      * @param string $type
      * @throws Exception\InvalidArgumentException
      */
-    protected function getExpression($field, $operator, &$value, $param, $type = null)
+    protected function getExpression($field, $operator, &$value, $param, $type = null, $allownull = false)
     {
+        if ($allownull) {
+            return $this->getQueryBuilder()->expr()->orX(
+                $this->getQueryBuilder()->expr()->isNull($field),
+                $this->getExpression($field, $operator, $value, $param, $type)
+            );
+        }
+
         switch ($operator) {
             case Filter::COMPARISON_EQUALS:
                 return $this->getEqualsExpr($field, $value, $param, $type);

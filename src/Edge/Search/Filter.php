@@ -58,7 +58,7 @@ class Filter
         foreach (array_reverse($groups[1]) as $key => $group) {
             $this->extractQueryPart($group, $key);
         }
-        
+
         return $this;
     }
 
@@ -69,7 +69,7 @@ class Filter
 
         foreach ($params[1] as $key => $field) {
             $value = $this->processValue($params[3][$key]);
-            $this->addFieldValue($field, $value, $params[2][$key], false, $group);
+            $this->addFieldValue($field, $value, $params[2][$key], false, false, $group);
         }
 
         if ($group == 0) {
@@ -98,10 +98,11 @@ class Filter
      * @param string $value
      * @param string $comparison see class consts
      * @param boolean $default whether the value should be considered a default
+     * @param boolean $allownull whether to also allow null values for this value
      * @param boolean $group which OR group to apply value to [optional]
      * @return Filter
      */
-    public function addFieldValue($field, $value, $comparison = self::COMPARISON_EQUALS, $default = false, $group = 0)
+    public function addFieldValue($field, $value, $comparison = self::COMPARISON_EQUALS, $default = false, $allownull = false, $group = 0)
     {
         if ($this->hasSearchField($field)) {
             if (isset($this->data[$group][$field]) && !$default) {
@@ -116,6 +117,7 @@ class Filter
                 'value'      => $value,
                 'comparison' => $comparison,
                 'default'    => $default,
+                'allow_null' => $allownull
             );
 
             return $this;
@@ -285,12 +287,14 @@ class Filter
     {
         foreach ($values as $field => $value) {
             if (is_array($value)) {
-                $value = $value['value'];
                 $comparison = isset($value['comparison']) ? $value['comparison'] : self::COMPARISON_EQUALS;
+                $allownull  = isset($value['allow_null']) ? $value['allow_null'] : false;
+                $value      = $value['value'];
             } else {
                 $comparison = self::COMPARISON_EQUALS;
+                $allownull  = false;
             }
-            $this->addFieldValue($field, $value, $comparison, true);
+            $this->addFieldValue($field, $value, $comparison, true, $allownull);
         }
 
         return $this;
