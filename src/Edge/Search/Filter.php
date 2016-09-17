@@ -25,17 +25,20 @@ class Filter
     const COMPARISON_GREATER_OR_EQ  = '>=';
     const COMPARISON_LESS_OR_EQ     = '<=';
 
+    const GROUP_MODE_AND            = '(';
+    const GROUP_MODE_OR             = '{';
+
     const FILTER_REGEX = '/([a-zA-Z-\.]+)(:|!|~|>=|>|<=|<)((?:\[[^)]+?\]|[^\[\]\s]+))/';
-    const GROUP_REGEX  = '/(?:\(([^()]*)\))/';
+    const GROUP_REGEX  = '/([\({}])([^()]*)[\)}]/';
 
     /**
      * Allowed search fields
      *
      * @var array
      */
-    protected $searchFields = array();
+    protected $searchFields = [];
 
-    protected $data = array();
+    protected $data = [];
 
     protected $keywords = null;
 
@@ -50,26 +53,25 @@ class Filter
             return $this;
         }
 
-        $groups  = array();
+        $this->extractQueryPart(preg_replace(self::GROUP_REGEX, '', $query));
 
         preg_match_all(self::GROUP_REGEX, $query, $groups);
-        $groups[1][] = preg_replace(self::GROUP_REGEX, '', $query);
 
-        foreach (array_reverse($groups[1]) as $key => $group) {
-            $this->extractQueryPart($group, $key);
+        foreach ($groups[2] as $key => $part) {
+            $this->extractQueryPart($part, $key + 1, $groups[1][$key]);
         }
-        
+
         return $this;
     }
 
-    protected function extractQueryPart($part, $group)
+    protected function extractQueryPart($part, $group = 0, $groupmode = self::GROUP_MODE_AND)
     {
         $params = array();
         preg_match_all(self::FILTER_REGEX, $part, $params);
 
         foreach ($params[1] as $key => $field) {
             $value = $this->processValue($params[3][$key]);
-            $this->addFieldValue($field, $value, $params[2][$key], false, $group);
+            $this->addFieldValue($field, $value, $params[2][$key], false, $group, $groupmode);
         }
 
         if ($group == 0) {
@@ -91,6 +93,17 @@ class Filter
         return $value;
     }
 
+    private function unProcessValue($value)
+    {
+        if (strstr($value, ' ')) {
+            $value = '[' . $value . ']';
+        } elseif ($value === null) {
+            $value = 'null';
+        }
+
+        return $value;
+    }
+
     /**
      * Add a value to the filter
      *
@@ -101,22 +114,23 @@ class Filter
      * @param boolean $group which OR group to apply value to [optional]
      * @return Filter
      */
-    public function addFieldValue($field, $value, $comparison = self::COMPARISON_EQUALS, $default = false, $group = 0)
+    public function addFieldValue($field, $value, $comparison = self::COMPARISON_EQUALS, $default = false, $group = 0, $groupmode = self::GROUP_MODE_AND)
     {
         if ($this->hasSearchField($field)) {
-            if (isset($this->data[$group][$field]) && !$default) {
-                foreach ($this->data[$group][$field] as $key => $values) {
+            if (isset($this->data[$group]['fields'][$field]) && !$default) {
+                foreach ($this->data[$group]['fields'][$field] as $key => $values) {
                     if ($values['default']) {
-                        unset($this->data[$group][$field][$key]);
+                        unset($this->data[$group]['fields'][$field][$key]);
                     }
                 }
             }
 
-            $this->data[$group][$field][] = array(
+            $this->data[$group]['mode']             = $groupmode;
+            $this->data[$group]['fields'][$field][] = [
                 'value'      => $value,
                 'comparison' => $comparison,
                 'default'    => $default,
-            );
+            ];
 
             return $this;
         }
@@ -160,8 +174,8 @@ class Filter
      */
     public function getFieldValues($field, $group = 0)
     {
-        if (isset($this->data[$group][$field])) {
-            return $this->data[$group][$field];
+        if (isset($this->data[$group]['fields'][$field])) {
+            return $this->data[$group]['fields'][$field];
         }
         return array();
     }
@@ -181,8 +195,6 @@ class Filter
     /**
      * Get the resulting query string
      *
-     * @todo handle all use cases, including square brackets
-     *
      * @return string
      */
     public function getQueryString()
@@ -193,15 +205,15 @@ class Filter
             return $this->getKeywords();
         }
 
-        foreach ($this->data as $group => $fields) {
+        foreach ($this->data as $group) {
             $groupStr = '';
-            foreach ($fields as $field => $values) {
+            foreach ($group['fields'] as $field => $values) {
                 foreach ($values as $value) {
-                    $groupStr.= $field . $value['comparison'] . $value['value'] . ' ';
+                    $groupStr.= $field . $value['comparison'] . $this->unProcessValue($value['value']) . ' ';
                 }
             }
             if ($group > 0) {
-                $groupStr = '('.trim($groupStr).')';
+                $groupStr = $group['mode'] . trim($groupStr) . ($group['mode'] == self::GROUP_MODE_AND ? ')' : '}') . ' ';
             }
             $filterStr.= $groupStr;
         }
