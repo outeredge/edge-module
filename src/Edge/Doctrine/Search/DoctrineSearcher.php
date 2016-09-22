@@ -104,11 +104,11 @@ class DoctrineSearcher extends AbstractSearcher
             $qb->getEntityManager()->clear();
         }
 
-        foreach ($filter->getAllFieldValues() as $groupkey => $group) {
-            $exprs = $qb->expr()->andX();
+        foreach ($filter->getAllFieldValues() as $group => $fields) {
+            $andXs = $qb->expr()->andX();
 
-            foreach ($group['fields'] as $field => $values) {
-                $expr = $group['mode'] == Filter::GROUP_MODE_AND ? $qb->expr()->andX() : $qb->expr()->orX();
+            foreach ($fields as $field => $values) {
+                $andX = $qb->expr()->andX();
                 foreach ($values as $data) {
                     $param       = ':param' . $i++;
                     $value       = $this->prepareValue($data['value'], $field);
@@ -116,7 +116,8 @@ class DoctrineSearcher extends AbstractSearcher
                     $orX         = $qb->expr()->orX();
 
                     foreach ((array) $mappedField['field'] as $fieldName) {
-                        $this->addJoin($fieldName, $groupkey);
+                        $this->addJoin($fieldName, $group);
+
                         if (!isset($this->conditionalFields[$fieldName])) {
                             $orX->add($this->getExpression($fieldName, $data['comparison'], $value, $param, $mappedField['type']));
                         } else {
@@ -124,20 +125,20 @@ class DoctrineSearcher extends AbstractSearcher
                         }
                     }
 
-                    $expr->add($orX);
+                    $andX->add($orX);
 
                     if (null !== $value) {
                         $qb->setParameter(trim($param, ':'), $value);
                     }
                 }
 
-                $exprs->add($expr);
+                $andXs->add($andX);
             }
 
-            if ($groupkey == 0) {
-                $qb->andWhere($exprs);
+            if ($group == 0) {
+                $qb->andWhere($andXs);
             } else {
-                $orXs->add($exprs);
+                $orXs->add($andXs);
             }
         }
 
