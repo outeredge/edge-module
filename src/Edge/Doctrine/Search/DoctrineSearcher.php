@@ -97,7 +97,6 @@ class DoctrineSearcher extends AbstractSearcher
     {
         $qb     = $this->getQueryBuilder();
         $filter = $this->getFilter();
-        $orXs   = $qb->expr()->orX();
         $i      = 0;
 
         if ($this->hasResults) {
@@ -105,45 +104,31 @@ class DoctrineSearcher extends AbstractSearcher
         }
 
         foreach ($filter->getAllFieldValues() as $group => $fields) {
-            $andXs = $qb->expr()->andX();
+            $expressions = $group === 0 ? $qb->expr()->andX() : $qb->expr()->orX();
 
             foreach ($fields as $field => $values) {
-                $andX = $qb->expr()->andX();
                 foreach ($values as $data) {
                     $param       = ':param' . $i++;
                     $value       = $this->prepareValue($data['value'], $field);
                     $mappedField = $this->getMappedField($field);
-                    $orX         = $qb->expr()->orX();
 
                     foreach ((array) $mappedField['field'] as $fieldName) {
                         $this->addJoin($fieldName, $group);
 
                         if (!isset($this->conditionalFields[$fieldName])) {
-                            $orX->add($this->getExpression($fieldName, $data['comparison'], $value, $param, $mappedField['type']));
+                            $expressions->add($this->getExpression($fieldName, $data['comparison'], $value, $param, $mappedField['type']));
                         } else {
                             $value = null;
                         }
                     }
 
-                    $andX->add($orX);
-
                     if (null !== $value) {
                         $qb->setParameter(trim($param, ':'), $value);
                     }
                 }
-
-                $andXs->add($andX);
             }
 
-            if ($group == 0) {
-                $qb->andWhere($andXs);
-            } else {
-                $orXs->add($andXs);
-            }
-        }
-
-        if ($orXs->count()) {
-            $qb->andWhere($orXs);
+            $qb->andWhere($expressions);
         }
 
         $keywordFields = $this->getOptions()->getKeywordFields();

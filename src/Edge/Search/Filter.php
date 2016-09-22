@@ -1,7 +1,7 @@
 <?php
 /**
 * Google style search
-*  - Wrap parameters in brackets if is more than one word
+*  - Wrap parameters in square brackets if is more than one word
 *  - All non parameter text is gathered into keyword variable
 */
 
@@ -33,9 +33,9 @@ class Filter
      *
      * @var array
      */
-    protected $searchFields = array();
+    protected $searchFields = [];
 
-    protected $data = array();
+    protected $data = [];
 
     protected $keywords = null;
 
@@ -50,21 +50,20 @@ class Filter
             return $this;
         }
 
-        $groups  = array();
+        $this->extractQueryPart(preg_replace(self::GROUP_REGEX, '', $query));
 
+        $groups = [];
         preg_match_all(self::GROUP_REGEX, $query, $groups);
-        $groups[1][] = preg_replace(self::GROUP_REGEX, '', $query);
-
-        foreach (array_reverse($groups[1]) as $key => $group) {
-            $this->extractQueryPart($group, $key);
+        foreach ($groups[1] as $key => $part) {
+            $this->extractQueryPart($part, $key + 1);
         }
-        
+
         return $this;
     }
 
-    protected function extractQueryPart($part, $group)
+    protected function extractQueryPart($part, $group = 0)
     {
-        $params = array();
+        $params = [];
         preg_match_all(self::FILTER_REGEX, $part, $params);
 
         foreach ($params[1] as $key => $field) {
@@ -86,6 +85,19 @@ class Filter
 
         if ($value == 'null') {
             return null;
+        }
+
+        return $value;
+    }
+
+    private function unprocessValue($value)
+    {
+        if (strstr($value, ' ')) {
+             $value = '[' . $value . ']';
+        } elseif ($value === false) {
+            $value = '0';
+        } elseif ($value === null) {
+            $value = 'null';
         }
 
         return $value;
@@ -163,7 +175,7 @@ class Filter
         if (isset($this->data[$group][$field])) {
             return $this->data[$group][$field];
         }
-        return array();
+        return [];
     }
 
     /**
@@ -197,11 +209,11 @@ class Filter
             $groupStr = '';
             foreach ($fields as $field => $values) {
                 foreach ($values as $value) {
-                    $groupStr.= $field . $value['comparison'] . $value['value'] . ' ';
+                    $groupStr.= $field . $value['comparison'] . $this->unprocessValue($value['value']) . ' ';
                 }
             }
             if ($group > 0) {
-                $groupStr = '('.trim($groupStr).')';
+                $groupStr = '(' . trim($groupStr) . ') ';
             }
             $filterStr.= $groupStr;
         }
@@ -298,7 +310,7 @@ class Filter
 
     public function clear()
     {
-        $this->data = array();
+        $this->data = [];
         return $this;
     }
 }
