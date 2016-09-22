@@ -1,7 +1,7 @@
 <?php
 /**
 * Google style search
-*  - Wrap parameters in brackets if is more than one word
+*  - Wrap parameters in square brackets if is more than one word
 *  - All non parameter text is gathered into keyword variable
 */
 
@@ -25,11 +25,11 @@ class Filter
     const COMPARISON_GREATER_OR_EQ  = '>=';
     const COMPARISON_LESS_OR_EQ     = '<=';
 
-    const GROUP_MODE_AND            = '(';
-    const GROUP_MODE_OR             = '{';
+    const OPERATOR_AND              = 'AND';
+    const OPERATOR_OR               = 'OR';
 
-    const FILTER_REGEX = '/([a-zA-Z-\.]+)(:|!|~|>=|>|<=|<)((?:\[[^)]+?\]|[^\[\]\s]+))/';
-    const GROUP_REGEX  = '/([\({}])([^()]*)[\)}]/';
+    const FILTER_REGEX = '/(OR|AND|) ?([a-zA-Z-\.]+)(:|!|~|>=|>|<=|<)((?:\[[^)]+?\]|[^\[\]\s]+))/';
+    const GROUP_REGEX  = '/(|AND|OR) ?(?:\(([^()]*)\))/';
 
     /**
      * Allowed search fields
@@ -64,14 +64,14 @@ class Filter
         return $this;
     }
 
-    protected function extractQueryPart($part, $group = 0, $groupmode = self::GROUP_MODE_AND)
+    protected function extractQueryPart($part, $group = 0, $groupmode = self::OPERATOR_AND)
     {
-        $params = array();
+        $params = [];
         preg_match_all(self::FILTER_REGEX, $part, $params);
 
-        foreach ($params[1] as $key => $field) {
-            $value = $this->processValue($params[3][$key]);
-            $this->addFieldValue($field, $value, $params[2][$key], false, $group, $groupmode);
+        foreach ($params[2] as $key => $field) {
+            $value = $this->processValue($params[4][$key]);
+            $this->addFieldValue($field, $value, $params[3][$key], $params[1][$key], false, $group, $groupmode);
         }
 
         if ($group == 0) {
@@ -97,7 +97,9 @@ class Filter
     {
         if (strstr($value, ' ')) {
             $value = '[' . $value . ']';
-        } elseif ($value === null) {
+        } elseif ($value === false) {
+            $value = '0';
+        } else if ($value === null) {
             $value = 'null';
         }
 
@@ -109,12 +111,14 @@ class Filter
      *
      * @param string $field
      * @param string $value
-     * @param string $comparison see class consts
+     * @param string $comparison see class consts COMPARISON_*
+     * @param string $operator see class consts OPERATOR_*
      * @param boolean $default whether the value should be considered a default
-     * @param boolean $group which OR group to apply value to [optional]
+     * @param boolean $group which group to apply value to
+     * @param string $groupmode the mode for the group
      * @return Filter
      */
-    public function addFieldValue($field, $value, $comparison = self::COMPARISON_EQUALS, $default = false, $group = 0, $groupmode = self::GROUP_MODE_AND)
+    public function addFieldValue($field, $value, $comparison = self::COMPARISON_EQUALS, $operator = self::OPERATOR_AND, $default = false, $group = 0, $groupmode = self::OPERATOR_AND)
     {
         if ($this->hasSearchField($field)) {
             if (isset($this->data[$group]['fields'][$field]) && !$default) {
@@ -125,14 +129,15 @@ class Filter
                 }
             }
 
-            if (!isset($this->data[$group]['mode'])) {
-                $this->data[$group]['mode'] = $groupmode;
+            if (!isset($this->data[$group]['operator'])) {
+                $this->data[$group]['operator'] = !empty($groupmode) ? $groupmode : self::OPERATOR_AND;
             }
-            
+
             $this->data[$group]['fields'][$field][] = [
                 'value'      => $value,
                 'comparison' => $comparison,
                 'default'    => $default,
+                'operator'   => !empty($operator) ? $operator : self::OPERATOR_AND
             ];
 
             return $this;
@@ -208,15 +213,15 @@ class Filter
             return $this->getKeywords();
         }
 
-        foreach ($this->data as $group) {
+        foreach ($this->data as $groupkey => $group) {
             $groupStr = '';
             foreach ($group['fields'] as $field => $values) {
                 foreach ($values as $value) {
                     $groupStr.= $field . $value['comparison'] . $this->unProcessValue($value['value']) . ' ';
                 }
             }
-            if ($group > 0) {
-                $groupStr = $group['mode'] . trim($groupStr) . ($group['mode'] == self::GROUP_MODE_AND ? ')' : '}') . ' ';
+            if ($groupkey > 0) {
+                $groupStr = $group['operator'] . ' (' . trim($groupStr) . ') ';
             }
             $filterStr.= $groupStr;
         }
@@ -302,10 +307,12 @@ class Filter
             if (is_array($value)) {
                 $value = $value['value'];
                 $comparison = isset($value['comparison']) ? $value['comparison'] : self::COMPARISON_EQUALS;
+                $operator   = isset($value['operator']) ? $value['operator'] : self::OPERATOR_AND;
             } else {
                 $comparison = self::COMPARISON_EQUALS;
+                $operator   = self::OPERATOR_AND;
             }
-            $this->addFieldValue($field, $value, $comparison, true);
+            $this->addFieldValue($field, $value, $comparison, $operator, true);
         }
 
         return $this;
@@ -313,7 +320,7 @@ class Filter
 
     public function clear()
     {
-        $this->data = array();
+        $this->data = [];
         return $this;
     }
 }
