@@ -25,7 +25,8 @@
         "zfcampus/zf-api-problem": "Restful API features",
         "erusev/parsedown": "For Markdown extensions",
         "jms/serializer": "JMS Serializer for serialization utility",
-        "chargebee/chargebee-php": "For Chargebee functions"
+        "chargebee/chargebee-php": "For Chargebee functions",
+        "beberlei/DoctrineExtensions": "Required for Doctrine searcher"
     },
     "autoload": {
         "psr-0": {
