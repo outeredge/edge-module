@@ -4,8 +4,9 @@ namespace Edge\Doctrine\Search;
 
 use ArrayIterator;
 use DateTime;
-use Doctrine\ORM\QueryBuilder;
+use Doctrine\ORM\Query;
 use Doctrine\ORM\Query\Expr\Join;
+use Doctrine\ORM\QueryBuilder;
 use Doctrine\ORM\Tools\Pagination\Paginator as DoctrinePaginator;
 use Edge\Search\AbstractSearcher;
 use Edge\Search\Exception;
@@ -166,20 +167,22 @@ class DoctrineSearcher extends AbstractSearcher
         $qb->setFirstResult($offset);
         $qb->setMaxResults($itemCountPerPage);
 
-        $paginator = new DoctrinePaginator($qb, count($qb->getDQLPart('join')));
-        $paginator->setUseOutputWalkers(false);
+        $query = $qb->getQuery();
+        $query->setHint(Query::HINT_CUSTOM_OUTPUT_WALKER, 'DoctrineExtensions\Query\MysqlWalker');
+        $query->setHint('mysqlWalker.sqlCalcFoundRows', true);
 
-        $this->count = $paginator->count();
-
-        if (0 == $this->count) {
-            return new ArrayIterator(array());
-        }
+        $paginator = new DoctrinePaginator($query, false);
 
         try {
-            $results = $paginator->getIterator();
+            $results     = $paginator->setUseOutputWalkers(false)->getIterator();
+            $this->count = $qb->getEntityManager()->getConnection()->query('SELECT FOUND_ROWS()')->fetchColumn(0);
         } catch (\RuntimeException $ex) {
-            $paginator->setUseOutputWalkers(true);
-            $results = $paginator->getIterator();
+            $results     = $paginator->setUseOutputWalkers(true)->getIterator();
+            $this->count = $paginator->count();
+        }
+
+        if (0 == $this->count) {
+            return new ArrayIterator([]);
         }
 
         foreach ($this->getConverters() as $converter) {
