@@ -7,6 +7,7 @@ use Edge\Mail\AddressList;
 use Edge\Mail\Exception;
 use Traversable;
 use Zend\Mail\Header\MessageId;
+use Zend\Mail\Exception\InvalidArgumentException as MailInvalidArgumentException;
 
 /**
  * This class is designed for use with API based in/out
@@ -550,27 +551,13 @@ class Message implements MessageInterface
         $addressList = new AddressList();
 
         foreach ($values as $address) {
-            if (!preg_match('/^((?P<name>.*?)<(?P<namedEmail>[^>]+)>|(?P<email>.+))$/', $address, $matches)) {
+            try {
+                $addressList->addFromString($address);
+            } catch (MailInvalidArgumentException $ex) {
+                continue;
+            } catch (Exception\InvalidArgumentException $ex) {
                 continue;
             }
-
-            $name = null;
-            if (isset($matches['name'])) {
-                $name = trim($matches['name']);
-            }
-            if (empty($name)) {
-                $name = null;
-            }
-
-            if (isset($matches['namedEmail'])) {
-                $email = $matches['namedEmail'];
-            }
-            if (isset($matches['email'])) {
-                $email = $matches['email'];
-            }
-            $email = trim($email);
-
-            $addressList->add($email, $name);
         }
 
         return $addressList;
