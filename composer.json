@@ -1,15 +1,15 @@
 {
-    "name": "outeredge/edge-zf2",
-    "description": "Edge is a library of useful classes designed to aid the creation of Web Applications with ZF2.",
+    "name": "outeredge/edge-module",
+    "description": "Edge is a library of useful classes designed to aid the creation of Web Applications.",
     "type": "library",
     "license": "MIT",
     "keywords": [
-        "module",
         "zf2",
+        "zf3",
         "edge",
         "doctrine"
     ],
-    "homepage": "https://github.com/outeredge/edge-zf2",
+    "homepage": "https://github.com/outeredge/edge-module",
     "authors": [
         {
             "name": "outer/edge",
