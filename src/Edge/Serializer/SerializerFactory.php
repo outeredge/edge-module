@@ -15,6 +15,15 @@ class SerializerFactory implements FactoryInterface
      */
     public function createService(ServiceLocatorInterface $serviceLocator)
     {
-        return new Serializer(SerializerBuilder::create()->build());
+        $config  = $serviceLocator->get('Config');
+        $builder = SerializerBuilder::create();
+
+        if (isset($config['edge']['serializer']['cache_dir'])) {
+            $builder->setCacheDir($config['edge']['serializer']['cache_dir']);
+        }
+
+        $builder->setDebug($config['edge']['serializer']['debug']);
+
+        return new Serializer($builder->build());
     }
 }

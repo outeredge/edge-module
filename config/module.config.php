@@ -4,6 +4,10 @@ return array(
     'edge' => array(
         'doctrine' => array(
             'fixtures' => []
+        ),
+        'serializer' => array(
+            'debug'     => false,
+            'cache_dir' => null
         )
     ),
     'service_manager' => array(
