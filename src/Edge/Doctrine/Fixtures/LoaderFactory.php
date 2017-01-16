@@ -7,15 +7,15 @@ use Interop\Container\ContainerInterface;
 
 class LoaderFactory implements FactoryInterface
 {
-    /**
-     * @param  ServiceLocatorInterface $serviceLocator
-     * @return Loader
-     */
     public function __invoke(ContainerInterface $container, $requestedName, array $options = null)
     {
         $config = $container->get('Config');
         $paths  = $config['edge']['doctrine']['fixtures'];
 
-        return new Loader($container->get('EntityManager'), $serviceLocator, $paths);
+        return new Loader(
+            $container->get('EntityManager'),
+            $paths,
+            $container
+        );
     }
 }

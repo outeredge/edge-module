@@ -12,8 +12,8 @@ class SerializeFactory implements FactoryInterface
      *
      * @return Serialize
      */
-    public function createService(ServiceLocatorInterface $plugins)
+    public function __invoke(ContainerInterface $container, $requestedName, array $options = null)
     {
-        return new Serialize($plugins->getServiceLocator()->get('Edge\Serializer\Serializer'));
+        return new Serialize($container->get('Edge\Serializer\Serializer'));
     }
 }

@@ -12,8 +12,8 @@ class MarkdownFactory implements FactoryInterface
      *
      * @return Markdown
      */
-    public function createService(ServiceLocatorInterface $views)
+    public function __invoke(ContainerInterface $container, $requestedName, array $options = null)
     {
-        return new Markdown($views->getServiceLocator()->get('Edge\Markdown\Markdown'));
+        return new Markdown($container->get('Edge\Markdown\Markdown'));
     }
 }

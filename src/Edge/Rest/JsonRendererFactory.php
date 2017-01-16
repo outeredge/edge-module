@@ -8,10 +8,6 @@ use Interop\Container\ContainerInterface;
 
 class JsonRendererFactory implements FactoryInterface
 {
-    /**
-     * @param  ServiceLocatorInterface $serviceLocator
-     * @return RestfulJsonRenderer
-     */
     public function __invoke(ContainerInterface $container, $requestedName, array $options = null)
     {
         $config  = $container->get('Config');

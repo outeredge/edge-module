@@ -6,6 +6,7 @@ use Zend\Validator\AbstractValidator;
 use Twig_Environment;
 use Twig_Error;
 use Twig_Error_Syntax;
+use Twig_Loader_Array;
 use Twig_Sandbox_SecurityError;
 
 class Twig extends AbstractValidator
@@ -41,7 +42,7 @@ class Twig extends AbstractValidator
     public function getTwig()
     {
         if (null === $this->twig) {
-            $this->twig = new Twig_Environment(new Twig_Loader_String());
+            $this->twig = new Twig_Environment(new Twig_Loader_Array());
         }
         return $this->twig;
     }

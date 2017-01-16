@@ -6,7 +6,6 @@ use Doctrine\Common\DataFixtures\Executor\ORMExecutor;
 use Doctrine\Common\DataFixtures\Loader as DoctrineLoader;
 use Doctrine\ORM\EntityManager;
 use Interop\Container\ContainerInterface;
-use Zend\ServiceManager\ServiceLocatorAwareInterface;
 
 class Loader
 {
@@ -16,20 +15,20 @@ class Loader
     protected $entityManager;
 
     /**
-     * @var ServiceLocatorInterface
-     */
-    protected $serviceLocator;
-
-    /**
      * @var array
      */
     protected $paths;
 
-    public function __construct(EntityManager $em, ServiceLocatorInterface $serviceLocator, array $paths)
+    /**
+     * @var ContainerInterface|null
+     */
+    protected $container;
+
+    public function __construct(EntityManager $em, array $paths, ContainerInterface $container = null)
     {
-        $this->entityManager  = $em;
-        $this->serviceLocator = $serviceLocator;
-        $this->paths          = $paths;
+        $this->entityManager = $em;
+        $this->paths         = $paths;
+        $this->container     = $container;
     }
 
     public function loadAllFixtures()
@@ -42,13 +41,12 @@ class Loader
         }
 
         $fixtures = $fixtureLoader->getFixtures();
-
         foreach ($fixtures as $fixture) {
-            if ($fixture instanceof ServiceLocatorAwareInterface) {
-                $fixture->setServiceLocator($this->serviceLocator);
+            if ($fixture instanceof LoaderContainerAwareInterface) {
+                $fixture->setContainer($this->container);
             }
         }
 
-        $executor->execute($fixtures, true);
+        $executor->execute($fixtureLoader->getFixtures(), true);
     }
 }
