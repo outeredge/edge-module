@@ -3,8 +3,8 @@
 namespace Edge\Serializer;
 
 use JMS\Serializer\SerializerBuilder;
-use Zend\ServiceManager\FactoryInterface;
-use Zend\ServiceManager\ServiceLocatorInterface;
+use Zend\ServiceManager\Factory\FactoryInterface;
+use Interop\Container\ContainerInterface;
 
 class SerializerFactory implements FactoryInterface
 {
@@ -13,9 +13,9 @@ class SerializerFactory implements FactoryInterface
      *
      * @return Serializer
      */
-    public function createService(ServiceLocatorInterface $serviceLocator)
+    public function __invoke(ContainerInterface $container, $requestedName, array $options = null)
     {
-        $config  = $serviceLocator->get('Config');
+        $config  = $container->get('Config');
         $builder = SerializerBuilder::create();
 
         if (isset($config['edge']['serializer']['cache_dir'])) {

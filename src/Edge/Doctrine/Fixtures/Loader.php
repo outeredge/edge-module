@@ -5,7 +5,7 @@ namespace Edge\Doctrine\Fixtures;
 use Doctrine\Common\DataFixtures\Executor\ORMExecutor;
 use Doctrine\Common\DataFixtures\Loader as DoctrineLoader;
 use Doctrine\ORM\EntityManager;
-use Zend\ServiceManager\ServiceLocatorInterface;
+use Interop\Container\ContainerInterface;
 use Zend\ServiceManager\ServiceLocatorAwareInterface;
 
 class Loader

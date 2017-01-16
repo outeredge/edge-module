@@ -2,8 +2,8 @@
 
 namespace Edge\Service\Aws;
 
-use Zend\ServiceManager\FactoryInterface;
-use Zend\ServiceManager\ServiceLocatorInterface;
+use Zend\ServiceManager\Factory\FactoryInterface;
+use Interop\Container\ContainerInterface;
 
 class S3Factory implements FactoryInterface
 {
@@ -12,11 +12,11 @@ class S3Factory implements FactoryInterface
      *
      * @return S3
      */
-    public function createService(ServiceLocatorInterface $serviceLocator)
+    public function __invoke(ContainerInterface $container, $requestedName, array $options = null)
     {
-        $config = $serviceLocator->get('Config');
+        $config = $container->get('Config');
         $config = isset($config['edge']['aws']['s3']) ? $config['edge']['aws']['s3'] : array();
 
-        return new S3($serviceLocator->get(Sdk::class)->createS3(), $config);
+        return new S3($container->get(Sdk::class)->createS3(), $config);
     }
 }

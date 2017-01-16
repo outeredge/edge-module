@@ -3,8 +3,8 @@
 namespace Edge\Rest;
 
 use Edge\Rest\View\RestfulJsonRenderer;
-use Zend\ServiceManager\FactoryInterface;
-use Zend\ServiceManager\ServiceLocatorInterface;
+use Zend\ServiceManager\Factory\FactoryInterface;
+use Interop\Container\ContainerInterface;
 
 class JsonRendererFactory implements FactoryInterface
 {
@@ -12,9 +12,9 @@ class JsonRendererFactory implements FactoryInterface
      * @param  ServiceLocatorInterface $serviceLocator
      * @return RestfulJsonRenderer
      */
-    public function createService(ServiceLocatorInterface $serviceLocator)
+    public function __invoke(ContainerInterface $container, $requestedName, array $options = null)
     {
-        $config  = $serviceLocator->get('Config');
+        $config  = $container->get('Config');
 
         $displayExceptions = false;
         if (isset($config['view_manager'])

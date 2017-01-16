@@ -2,8 +2,8 @@
 
 namespace Edge\Serializer\View\Helper;
 
-use Zend\ServiceManager\FactoryInterface;
-use Zend\ServiceManager\ServiceLocatorInterface;
+use Zend\ServiceManager\Factory\FactoryInterface;
+use Interop\Container\ContainerInterface;
 
 class SerializeFactory implements FactoryInterface
 {

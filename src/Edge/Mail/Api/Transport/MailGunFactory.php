@@ -2,8 +2,8 @@
 
 namespace Edge\Mail\Api\Transport;
 
-use Zend\ServiceManager\FactoryInterface;
-use Zend\ServiceManager\ServiceLocatorInterface;
+use Zend\ServiceManager\Factory\FactoryInterface;
+use Interop\Container\ContainerInterface;
 
 class MailGunFactory implements FactoryInterface
 {
@@ -12,9 +12,9 @@ class MailGunFactory implements FactoryInterface
      *
      * @return MailGun
      */
-    public function createService(ServiceLocatorInterface $serviceLocator)
+    public function __invoke(ContainerInterface $container, $requestedName, array $options = null)
     {
-        $config  = $serviceLocator->get('Config');
+        $config  = $container->get('Config');
         $config  = isset($config['edge']['mailgun']) ? $config['edge']['mailgun'] : null;
 
         return new MailGun(new MailGunOptions($config));

@@ -2,8 +2,8 @@
 
 namespace Edge\Doctrine\Fixtures;
 
-use Zend\ServiceManager\FactoryInterface;
-use Zend\ServiceManager\ServiceLocatorInterface;
+use Zend\ServiceManager\Factory\FactoryInterface;
+use Interop\Container\ContainerInterface;
 
 class LoaderFactory implements FactoryInterface
 {
@@ -11,11 +11,11 @@ class LoaderFactory implements FactoryInterface
      * @param  ServiceLocatorInterface $serviceLocator
      * @return Loader
      */
-    public function createService(ServiceLocatorInterface $serviceLocator)
+    public function __invoke(ContainerInterface $container, $requestedName, array $options = null)
     {
-        $config = $serviceLocator->get('Config');
+        $config = $container->get('Config');
         $paths  = $config['edge']['doctrine']['fixtures'];
 
-        return new Loader($serviceLocator->get('EntityManager'), $serviceLocator, $paths);
+        return new Loader($container->get('EntityManager'), $serviceLocator, $paths);
     }
 }

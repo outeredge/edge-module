@@ -2,8 +2,8 @@
 
 namespace Edge\Filter\File;
 
-use Zend\ServiceManager\FactoryInterface;
-use Zend\ServiceManager\ServiceLocatorInterface;
+use Zend\ServiceManager\Factory\FactoryInterface;
+use Interop\Container\ContainerInterface;
 
 class AmazonUploadFactory implements FactoryInterface
 {
@@ -12,8 +12,8 @@ class AmazonUploadFactory implements FactoryInterface
      *
      * @return AmazonUpload
      */
-    public function createService(ServiceLocatorInterface $serviceLocator)
+    public function __invoke(ContainerInterface $container, $requestedName, array $options = null)
     {
-        return new AmazonUpload($serviceLocator->get('Edge\Service\Aws\S3'));
+        return new AmazonUpload($container->get('Edge\Service\Aws\S3'));
     }
 }
