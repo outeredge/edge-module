@@ -50,7 +50,8 @@ class Twig extends AbstractValidator
     public function isValid($value)
     {
         try {
-            $this->twig->render($value);
+            $template = $this->twig->createTemplate($value);
+            $template->render([]);
         } catch (Twig_Error_Syntax $e) {
             $this->error(self::SYNTAX_ERROR, $e->getRawMessage());
             return false;

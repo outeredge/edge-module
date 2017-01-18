@@ -4,7 +4,7 @@ namespace Edge\Twig\Extension;
 
 use Edge\Markdown\MarkdownInterface;
 use Twig_Extension;
-use Twig_Filter_Method;
+use Twig_Filter;
 
 class Markdown extends Twig_Extension
 {
@@ -26,7 +26,7 @@ class Markdown extends Twig_Extension
     public function getFilters()
     {
         return array(
-            'markdown' => new Twig_Filter_Method($this, 'transform', array('is_safe' => array('html'))),
+            'markdown' => new Twig_Filter('transform', $this, ['is_safe' => ['html']]),
         );
     }
 
