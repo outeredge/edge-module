@@ -8,8 +8,8 @@ use Zend\Console\Console;
 use Zend\Http\Headers;
 use Zend\Http\PhpEnvironment\Request;
 use Zend\Mvc\MvcEvent;
-use Zend\Mvc\Router\RouteMatch;
 use Zend\Mvc\Controller\AbstractController;
+use Zend\Router\RouteMatch;
 use Zend\Stdlib\ResponseInterface;
 use Zend\Uri\Http as HttpUri;
 
@@ -81,7 +81,7 @@ abstract class AbstractControllerTestCase extends AbstractTestCase
     protected function setController(AbstractController $controller)
     {
         $controller->setPluginManager($this->getServiceManager()->get('ControllerPluginManager'));
-        
+
         $this->controller = $controller;
         return $this;
     }
