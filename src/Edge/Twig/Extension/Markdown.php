@@ -18,16 +18,11 @@ class Markdown extends Twig_Extension
         $this->markdown = $markdown;
     }
 
-    public function getName()
-    {
-        return 'Markdown';
-    }
-
     public function getFilters()
     {
-        return array(
-            'markdown' => new Twig_Filter('transform', $this, ['is_safe' => ['html']]),
-        );
+        return [
+            new Twig_Filter('markdown', [$this, 'transform'], ['is_safe' => ['html']]),
+        ];
     }
 
     /**
