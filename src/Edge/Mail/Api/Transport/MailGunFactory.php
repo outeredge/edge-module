@@ -14,7 +14,7 @@ class MailGunFactory implements FactoryInterface
      */
     public function __invoke(ContainerInterface $container, $requestedName, array $options = null)
     {
-        $config  = $container->get('Config');
+        $config  = $container->get('config');
         $config  = isset($config['edge']['mailgun']) ? $config['edge']['mailgun'] : null;
 
         return new MailGun(new MailGunOptions($config));

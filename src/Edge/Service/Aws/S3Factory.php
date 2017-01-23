@@ -14,7 +14,7 @@ class S3Factory implements FactoryInterface
      */
     public function __invoke(ContainerInterface $container, $requestedName, array $options = null)
     {
-        $config = $container->get('Config');
+        $config = $container->get('config');
         $config = isset($config['edge']['aws']['s3']) ? $config['edge']['aws']['s3'] : array();
 
         return new S3($container->get(Sdk::class)->createS3(), $config);
