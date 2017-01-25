@@ -43,7 +43,7 @@ return array(
         ),
         'aliases' => array(
             'serialize' => 'Edge\Serializer\Mvc\Controller\Plugin\Serialize',
-            'outputcsv' => 'Edge\Mvc\Controller\Plugin\OutputCsv'
+            'outputCsv' => 'Edge\Mvc\Controller\Plugin\OutputCsv'
         ),
         'invokables' => array(
             'Edge\Mvc\Controller\Plugin\OutputCsv' => 'Edge\Mvc\Controller\Plugin\OutputCsv'
