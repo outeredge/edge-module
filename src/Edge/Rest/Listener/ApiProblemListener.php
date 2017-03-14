@@ -2,7 +2,7 @@
 
 namespace Edge\Rest\Listener;
 
-use Exception;
+use Throwable;
 use ZF\ApiProblem\ApiProblem;
 use Zend\EventManager\EventManagerInterface;
 use Zend\EventManager\ListenerAggregateInterface;
@@ -91,12 +91,12 @@ class ApiProblemListener implements ListenerAggregateInterface
             return;
         }
 
-        $exception  = $model->getVariable('exception');
-        if (!$exception instanceof Exception) {
+        $error = $model->getVariable('exception');
+        if (!$error instanceof Throwable) {
             return;
         }
 
-        $jsonModel  = new JsonModel(array('api-problem' => new ApiProblem($exception->getCode(), $exception)));
+        $jsonModel  = new JsonModel(array('api-problem' => new ApiProblem($error->getCode(), $error)));
 
         $e->setResult($jsonModel);
         $e->setViewModel($jsonModel);
