@@ -9,33 +9,24 @@ use Zend\Mvc\MvcEvent;
 
 class FlushEntities
 {
-    const ERROR_FLUSH = 'error-flush';
-
     public static function flush(EventInterface $e)
     {
-        try {
-            if ($e->getTarget() instanceof EntityManager) {
-                $em = $e->getTarget();
-            } elseif ($e instanceof MvcEvent) {
-                $em = $e->getApplication()->getServiceManager()->get('EntityManager');
-            } else {
-                throw new Exception\RuntimeException('No EntityManager instance available');
-            }
+        if ($e instanceof MvcEvent && $e->isError()) {
+            return;
+        }
 
-            if (null !== $e->getParam('entity')) {
-                $em->flush($e->getParam('entity'));
-            } else {
-                $em->flush();
-            }
-        } catch (\Exception $ex) {
-            if (!$e instanceof MvcEvent) {
-                throw $ex;
-            }
+        if ($e->getTarget() instanceof EntityManager) {
+            $em = $e->getTarget();
+        } elseif ($e instanceof MvcEvent) {
+            $em = $e->getApplication()->getServiceManager()->get('EntityManager');
+        } else {
+            throw new Exception\RuntimeException('No EntityManager instance available');
+        }
 
-            $e->setError(self::ERROR_FLUSH)
-              ->setParam('exception', $ex);
-
-            $e->getApplication()->getEventManager()->trigger(MvcEvent::EVENT_DISPATCH_ERROR, $e);
+        if (null !== $e->getParam('entity')) {
+            $em->flush($e->getParam('entity'));
+        } else {
+            $em->flush();
         }
     }
 }
