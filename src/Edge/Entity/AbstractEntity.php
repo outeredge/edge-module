@@ -36,6 +36,6 @@ abstract class AbstractEntity implements ArrayAccess
     
     public function getEntityShortName()
     {
-        return strtolower(substr(strrchr(static::class, '\\'), 1));
+        return substr(strrchr(static::class, '\\'), 1);
     }
 }
