@@ -31,6 +31,6 @@ class PhantomJsService
             throw new Exception\RuntimeException(sprintf('Unable to run command. %s', $result));
         }
 
-        return $result;
+        return implode(PHP_EOL, $output);
     }
 }
