@@ -608,12 +608,10 @@ class Message implements MessageInterface
     public function getAllRecipients()
     {
         $recipients = $this->getTo();
-        $ccs        = $this->getCc();
 
-        if (!empty($ccs)) {
-            $recipients->merge($ccs);
-        }
-
+        $recipients->merge($this->getCc());
+        $recipients->merge($this->getBcc());
+        
         return $recipients;
     }
 
