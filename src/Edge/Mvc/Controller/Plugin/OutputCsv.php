@@ -8,7 +8,7 @@ use Zend\Mvc\Controller\Plugin\AbstractPlugin;
 class OutputCsv extends AbstractPlugin
 {
     /**
-     * Convert an array to a CSV an output directly to the browser
+     * Convert an array to a CSV and output directly to the browser
      *
      * NB: This function is terminal
      *
