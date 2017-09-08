@@ -17,6 +17,7 @@ class DoctrineSearcher extends AbstractSearcher
     const FIELD_TYPE_BOOLEAN  = 'bool';
     const FIELD_TYPE_DATE     = 'date';
     const FIELD_TYPE_FULLTEXT = 'fulltext';
+    const FIELD_TYPE_INTEGER  = 'int';
 
     /**
      * @var DoctrineSearcherOptions
@@ -362,7 +363,7 @@ class DoctrineSearcher extends AbstractSearcher
      */
     protected function getLikeExpr($field, &$value, $paramName, $type = null)
     {
-        if (null === $value) {
+        if (null === $value || $type == self::FIELD_TYPE_INTEGER) {
             return $this->getEqualsExpr($field, $value, $paramName);
         }
 
