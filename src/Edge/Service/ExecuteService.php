@@ -2,19 +2,17 @@
 
 namespace Edge\Service;
 
-class PhantomJsService
+class ExecuteService
 {
-    protected $bin = 'phantomjs';
+    protected $command;
 
-    public function __construct($bin = null)
+    public function __construct($command)
     {
-        if (null !== $bin) {
-            $this->bin = realpath($bin);;
-        }
+        $this->command = realpath($command);
     }
 
     /**
-     * Run PhantomJs and return the last command output
+     * Exec command and return the last output
      *
      * @return string
      * @throws Exception\RuntimeException
@@ -34,9 +32,9 @@ class PhantomJsService
     }
 
     /**
-     * Pipe command to PhantomJS, expects first argument to be the content
+     * Pipe first given argument to the command and append the rest as arguments
      *
-     * @return string resulting output
+     * @return string Resulting output
      * @throws Exception\RuntimeException
      */
     public function pipeCommand()
@@ -91,6 +89,6 @@ class PhantomJsService
             $arg = escapeshellarg($arg);
         }
 
-        return escapeshellcmd("{$this->bin} --ignore-ssl-errors=true " . implode(' ', $args));
+        return escapeshellcmd("{$this->command} " . implode(' ', $args));
     }
 }
