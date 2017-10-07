@@ -8,7 +8,8 @@ class ExecuteService
 
     public function __construct($command)
     {
-        $this->command = realpath($command);
+        $realpath = realpath($command);
+        $this->command = $realpath ? $realpath : $command;
     }
 
     /**
