@@ -214,6 +214,8 @@ class DoctrineSearcher extends AbstractSearcher
                 return $this->getNotEqualsExpr($field, $value, $param);
             case Filter::COMPARISON_LIKE:
                 return $this->getLikeExpr($field, $value, $param, $type);
+            case Filter::COMPARISON_NOT_LIKE:
+                return $this->getNotLikeExpr($field, $value, $param, $type);
             case Filter::COMPARISON_GREATER:
                 return $this->getGreaterThanExpr($field, $param);
             case Filter::COMPARISON_GREATER_OR_EQ:
@@ -374,6 +376,24 @@ class DoctrineSearcher extends AbstractSearcher
         $value = '%' . $value . '%';
 
         return $this->getQueryBuilder()->expr()->like($field, $paramName);
+    }
+
+    /**
+     * Get a not like expression for specified field and data
+     *
+     * @param string  $field field name
+     * @param mixed   $value search value
+     * @param string  $paramName parameter name to use
+     */
+    protected function getNotLikeExpr($field, &$value, $paramName, $type = null)
+    {
+        if (null === $value || $type == self::FIELD_TYPE_INTEGER) {
+            return $this->getNotEqualsExpr($field, $value, $paramName);
+        }
+
+        $value = '%' . $value . '%';
+
+        return $this->getQueryBuilder()->expr()->notLike($field, $paramName);
     }
 
     protected function getGreaterThanExpr($field, $paramName)
