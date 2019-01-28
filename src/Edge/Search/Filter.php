@@ -20,12 +20,13 @@ class Filter
     const COMPARISON_EQUALS         = ':';
     const COMPARISON_NOT_EQUALS     = '!';
     const COMPARISON_LIKE           = '~';
+    const COMPARISON_NOT_LIKE       = '!~';
     const COMPARISON_GREATER        = '>';
     const COMPARISON_LESS           = '<';
     const COMPARISON_GREATER_OR_EQ  = '>=';
     const COMPARISON_LESS_OR_EQ     = '<=';
 
-    const FILTER_REGEX = '/([a-zA-Z-\.]+)(:|!|~|>=|>|<=|<)((?:\[[^)]+?\]|[^\[\]\s]+))/';
+    const FILTER_REGEX = '/([a-zA-Z-\.]+)(:|!~|~|!|>=|>|<=|<)((?:\[[^)]+?\]|[^\[\]\s]+))/';
     const GROUP_REGEX  = '/(?:\(([^()]*)\))/';
 
     /**
