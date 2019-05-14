@@ -7,7 +7,7 @@ use Twig_Environment;
 use Twig_Error;
 use Twig_Error_Syntax;
 use Twig_Loader_Array;
-use Twig_Sandbox_SecurityError;
+use Twig_Source;
 
 class Twig extends AbstractValidator
 {
@@ -50,13 +50,9 @@ class Twig extends AbstractValidator
     public function isValid($value)
     {
         try {
-            $template = $this->twig->createTemplate($value);
-            $template->render([]);
+            $this->twig->parse($this->twig->tokenize(new Twig_Source($value, 'template')));
         } catch (Twig_Error_Syntax $e) {
             $this->error(self::SYNTAX_ERROR, $e->getRawMessage());
-            return false;
-        } catch (Twig_Sandbox_SecurityError $e) {
-            $this->error(self::SECURITY_ERROR, $e->getRawMessage());
             return false;
         } catch (Twig_Error $e) {
             $this->error(self::UNKNOWN_PARSE_ERROR);
