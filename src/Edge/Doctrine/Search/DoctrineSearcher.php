@@ -168,20 +168,11 @@ class DoctrineSearcher extends AbstractSearcher
         $qb->setFirstResult($offset);
         $qb->setMaxResults($itemCountPerPage);
 
-        $query = $qb->getQuery();
-        $query->setHint(Query::HINT_CUSTOM_OUTPUT_WALKER, 'DoctrineExtensions\Query\MysqlWalker');
-        $query->setHint('mysqlWalker.sqlCalcFoundRows', true);
-
+        $query     = $qb->getQuery();
         $paginator = new DoctrinePaginator($query, false);
+        $results   = $paginator->setUseOutputWalkers(true)->getIterator();
 
-        try {
-            $results     = $paginator->setUseOutputWalkers(false)->getIterator();
-            $this->count = $qb->getEntityManager()->getConnection()->query('SELECT FOUND_ROWS()')->fetchColumn(0);
-        } catch (\RuntimeException $ex) {
-            $results     = $paginator->setUseOutputWalkers(true)->getIterator();
-            $this->count = $paginator->count();
-        }
-
+        $this->count = $paginator->count();
         if (0 == $this->count) {
             return new ArrayIterator([]);
         }
