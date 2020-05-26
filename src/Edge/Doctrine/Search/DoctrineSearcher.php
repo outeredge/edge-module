@@ -133,9 +133,9 @@ class DoctrineSearcher extends AbstractSearcher
             $qb->andWhere($expressions);
         }
 
+        $hasFulltext   = false;
         $keywordFields = $this->getOptions()->getKeywordFields();
-        if (!empty($keywordFields) && null !== $filter->getKeywords()) {
-            $hasFulltext = false;
+        if (!empty($keywordFields) && null !== $filter->getKeywords()) {            
             $orX = $qb->expr()->orX();
 
             foreach ($keywordFields as $field) {
@@ -159,7 +159,7 @@ class DoctrineSearcher extends AbstractSearcher
             }
         }
 
-        if (null !== $filter->getSortField()) {
+        if (null !== $filter->getSortField() && !$hasFulltext) {
             $mappedSortField = $this->getMappedField($filter->getSortField());
             $this->addJoin($mappedSortField['field']);
             $qb->orderBy($mappedSortField['field'], $filter->getSortOrder());
