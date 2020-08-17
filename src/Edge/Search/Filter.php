@@ -265,6 +265,11 @@ class Filter
         return $this;
     }
 
+    public function clearSort()
+    {
+        $this->sort = null;
+    }
+
     public function setSearchFields(array $fields)
     {
         if (ArrayUtils::isList($fields)) {
