@@ -159,7 +159,7 @@ class DoctrineSearcher extends AbstractSearcher
             }
         }
 
-        if (null !== $filter->getSortField() && !$hasFulltext) {
+        if (null !== $filter->getSortField()) {
             $mappedSortField = $this->getMappedField($filter->getSortField());
             $this->addJoin($mappedSortField['field']);
             $qb->orderBy($mappedSortField['field'], $filter->getSortOrder());
