@@ -144,7 +144,10 @@ class DoctrineSearcher extends AbstractSearcher
                     $this->addJoin($fieldName);
                     if ($mappedField['type'] === self::FIELD_TYPE_FULLTEXT) {
                         $hasFulltext = true;
-                        $orX->add(sprintf('MATCH (%s) AGAINST (%s) > 1', $fieldName, ':fulltext_keyword'));
+                        $orX->add($qb->expr()->andX(
+                            sprintf('MATCH (%s) AGAINST (%s) > 1', $fieldName, ':fulltext_keyword'),
+                            sprintf('%s IS NOT NULL', $fieldName)
+                        ));                        
                     } else {
                         $orX->add($qb->expr()->like($fieldName,  ':keyword'));
                     }
