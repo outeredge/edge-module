@@ -135,7 +135,7 @@ class DoctrineSearcher extends AbstractSearcher
 
         $hasFulltext   = false;
         $keywordFields = $this->getOptions()->getKeywordFields();
-        if (!empty($keywordFields) && null !== $filter->getKeywords()) {            
+        if (!empty($keywordFields) && null !== $filter->getKeywords()) {
             $orX = $qb->expr()->orX();
 
             foreach ($keywordFields as $field) {
@@ -147,7 +147,7 @@ class DoctrineSearcher extends AbstractSearcher
                         $orX->add($qb->expr()->andX(
                             sprintf('MATCH (%s) AGAINST (%s) > 1', $fieldName, ':fulltext_keyword'),
                             sprintf('%s IS NOT NULL', $fieldName)
-                        ));                        
+                        ));
                     } else {
                         $orX->add($qb->expr()->like($fieldName,  ':keyword'));
                     }
@@ -290,14 +290,16 @@ class DoctrineSearcher extends AbstractSearcher
                         throw new Exception\InvalidArgumentException('Too many conditions for join');
                     }
 
+                    $mappedField = $this->getMappedField($joinConditionals[$joinAlias])['field'];
+
                     $joinCondition = $this->getExpression(
-                        $field,
+                        $mappedField,
                         $conditionValues[0]['comparison'],
                         $conditionValues[0]['value'],
                         $conditionValues[0]['value']
                     );
 
-                    $this->conditionalFields[$field] = true;
+                    $this->conditionalFields[$mappedField] = true;
                 }
             }
 
