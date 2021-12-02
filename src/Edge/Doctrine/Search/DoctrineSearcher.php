@@ -255,7 +255,7 @@ class DoctrineSearcher extends AbstractSearcher
         $joinTables = $this->getOptions()->getJoinTables();
         $joinAlias  = strstr($field, '.', true);
 
-        if ($joinAlias == $qb->getRootAlias()) {
+        if ($joinAlias == $qb->getRootAliases()[0]) {
             return;
         }
 
@@ -303,7 +303,7 @@ class DoctrineSearcher extends AbstractSearcher
                 }
             }
 
-            $qb->leftJoin($qb->getRootAlias() . '.' . $joinTable, $groupAlias, Join::WITH, $joinCondition);
+            $qb->leftJoin($qb->getRootAliases()[0] . '.' . $joinTable, $groupAlias, Join::WITH, $joinCondition);
         }
 
         $this->joins[$groupAlias] = true;
@@ -343,10 +343,43 @@ class DoctrineSearcher extends AbstractSearcher
      */
     protected function getNotEqualsExpr($field, $value, $paramName)
     {
-        $expr = $this->getQueryBuilder()->expr();
+        $qb   = $this->getQueryBuilder();
+        $expr = $qb->expr();
 
         if (null === $value) {
             return $expr->isNotNull($field);
+        }
+
+        // Check if we need to use NOT EXISTS
+        $fieldVals = explode('.', $field);
+
+        $rootAlias = $qb->getRootAliases()[0];
+        $entity    = $qb->getRootEntities()[0];
+        $meta      = $qb->getEntityManager()->getClassMetadata($entity);
+        $metaAssoc = $meta->getAssociationMappings();
+        $joins     = $this->getOptions()->getJoinTables();
+
+        if ($fieldVals[0] != $rootAlias
+            && isset($joins[$fieldVals[0]])
+            && isset($metaAssoc[$joins[$fieldVals[0]]]['targetEntity'])
+            && $qb->getEntityManager()->getClassMetadata($metaAssoc[$joins[$fieldVals[0]]]['targetEntity'])->getSingleIdentifierFieldName() == $fieldVals[1]
+        ) {
+            $subRoot = uniqid('sub');
+
+            $sub = $qb->getEntityManager()->createQueryBuilder();
+            $sub->select($subRoot)
+                ->from($entity, $subRoot)
+                ->innerJoin($subRoot . '.' . $joins[$fieldVals[0]], $subRoot . 'join')
+                ->andWhere($qb->expr()->eq(
+                    $subRoot . 'join' . '.' . $fieldVals[1],
+                    $paramName
+                ))
+                ->andWhere($qb->expr()->eq(
+                    $subRoot . '.' . $meta->getSingleIdentifierFieldName(),
+                    $rootAlias . '.' . $meta->getSingleIdentifierFieldName()
+                ));
+
+            return $expr->not($qb->expr()->exists($sub->getDQL()));
         }
 
         return $expr->neq($field, $paramName);
