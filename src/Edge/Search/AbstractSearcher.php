@@ -25,7 +25,7 @@ abstract class AbstractSearcher implements SearcherInterface
     /**
      * @var array|FilterInterface[]
      */
-    protected $valuefilters = array();
+    protected $valuefilters = [];
 
 
     public function __construct()
@@ -89,11 +89,11 @@ abstract class AbstractSearcher implements SearcherInterface
 
     public function addValueFilter($field, FilterInterface $filter)
     {
-        $this->valuefilters[$field] = $filter;
+        $this->valuefilters[$field][] = $filter;
         return $this;
     }
 
-    public function hasValueFilter($field)
+    public function hasValueFilters($field)
     {
         return array_key_exists($field, $this->valuefilters)
                || array_key_exists('*', $this->valuefilters);
@@ -103,10 +103,10 @@ abstract class AbstractSearcher implements SearcherInterface
      * Get value filter for field
      *
      * @param  string $field
-     * @return FilterInterface
+     * @return array|FilterInterface[]
      * @throws Exception\InvalidArgumentException
      */
-    public function getValueFilter($field)
+    public function getValueFilters($field)
     {
         if (isset($this->valuefilters[$field])) {
             return $this->valuefilters[$field];
@@ -123,7 +123,7 @@ abstract class AbstractSearcher implements SearcherInterface
         return $this->valuefilters['*'];
     }
 
-    public function removeValueFilter($field)
+    public function removeValueFilters($field)
     {
         unset($this->valuefilters[$field]);
         return $this;
@@ -131,8 +131,10 @@ abstract class AbstractSearcher implements SearcherInterface
 
     protected function prepareValue($value, $field)
     {
-        if ($this->hasValueFilter($field)) {
-            $value = $this->getValueFilter($field)->filter($value);
+        if ($this->hasValueFilters($field)) {
+            foreach ($this->getValueFilters($field) as $filter) {
+                $value = $filter->filter($value);
+            }
         }
 
         $mappedField = $this->getMappedField($field);
@@ -143,7 +145,7 @@ abstract class AbstractSearcher implements SearcherInterface
 
     /**
      * Get mapped field
-     * 
+     *
      * @param  string $name
      * @return array
      * @throws Exception\InvalidArgumentException
